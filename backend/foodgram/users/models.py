@@ -9,10 +9,10 @@ class MyUser(AbstractUser):
         'Аватар',
         upload_to='users/avatars/',
         null=True,
-        blank=True,
+        default=None,
     )
     email = models.EmailField(
-        'email',
+        'Email',
         max_length=254,
         unique=True,
         blank=False,
@@ -20,7 +20,7 @@ class MyUser(AbstractUser):
         help_text='Адрес электронной почты',
     )
     username = models.CharField(
-        'Имя пользователя',
+        'Юзернейм',
         max_length=150,
         unique=True,
         blank=False,
@@ -40,11 +40,6 @@ class MyUser(AbstractUser):
         blank=False,
         null=False
     )
-    password = models.CharField(
-        'Пароль',
-        blank=False,
-        null=False,
-    )
 
     class Meta:
         ordering = ('last_name',)
@@ -52,7 +47,34 @@ class MyUser(AbstractUser):
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
-        return f'{self.first_name} + {self.last_name}'
+        return f'{self.first_name} {self.last_name}'
 
 
-class Subscription
+class Subscription(models.Model):
+    follower = models.ForeignKey(
+        MyUser,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name='follower'
+    )
+    subscribed_to = models.ForeignKey(
+        MyUser,
+        on_delete=models.CASCADE,
+        verbose_name='На кого подписан',
+        related_name='subscribed_to'
+    )
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=('follower', 'subscribed_to'),
+                name='unique_follower_subscribed_to'
+            ),
+        )
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return (
+            f'{self.follower.username} -> {self.subscribed_to.username}'
+        )

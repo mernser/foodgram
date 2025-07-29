@@ -25,12 +25,14 @@ SECRET_KEY = 'django-insecure-xhfk1gc)0h$((vs3*-b7h*48+5255py(sm^x^w8$2us=x8$#8v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*', 'localhost']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'users.apps.UsersConfig',
+    'api.apps.ApiConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +42,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
-    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -128,29 +129,39 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # моя часть
+AUTH_USER_MODEL = 'users.MyUser'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'users.pagination.CustomPageNumberPagination',
+    'PAGE_SIZE': 6,
 }
 
 # Djoser settings
-# DJOSER = {
-#     'SERIALIZERS': {
-#         'user': 'users.serializers.CustomUserSerializer',
-#         'current_user': 'users.serializers.CustomUserSerializer',
-#     },
-#     'HIDE_USERS': False,
-# }
+DJOSER = {
+    'SERIALIZERS': {
+        'user': 'users.serializers.UserProfileSerilizer',
+        'user_create': 'users.serializers.UserSignUpSerializer',
+        'current_user': 'users.serializers.UserProfileSerilizer',
+    },
+    'HIDE_USERS': False,
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': False,
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+    }
+}
 
 
-# AUTH_USER_MODEL = 'users.MyUser'
+AUTHENTICATION_BACKENDS = [
+    "djoser.auth_backends.LoginFieldBackend",
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
