@@ -12,6 +12,7 @@ class MyUser(AbstractUser):
         upload_to='users/avatars/',
         null=True,
         default=None,
+        help_text='Фотография профиля пользователя',
     )
     email = models.EmailField(
         'Email',
