@@ -11,14 +11,28 @@ User = get_user_model()
 
 class CustomUserViewSet(UserViewSet):
     @action(detail=True,
+            methods=('delete'),
+            permission_classes=(IsAuthenticated,),
+            url_path='avatar')
+    def avatar_delete(self, request):
+        if request.user.avatar:
+            request.user.avatar.delete()
+            request.user.avatar = None
+            request.user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    @action(detail=True,
             methods=('put',),
             permission_classes=(IsAuthenticated,),
             url_path='avatar')
-    def avatar(self, request):
+    def avatar_update(self, request):
         serializer = AvatarUpdateSerializer(
             request.user,
             data=request.data,
-            partial=True,
+            partial=False,
             context={'request': request}
         )
         if serializer.is_valid():
