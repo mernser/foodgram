@@ -58,7 +58,7 @@ class Tag(models.Model):
         return f'{self.name}'
 
 
-class Recipies(models.Model):
+class Recipie(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -111,15 +111,22 @@ class Recipies(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if not self.short_link:
+        # Если это новый объект и short_link ещё не установлен
+        if not self.pk and not self.short_link:
+            # Сначала сохраняем, чтобы получить pub_date
+            super().save(*args, **kwargs)
+            # Теперь генерируем short_link
             self.short_link = (
                 hashlib.sha256(
                     f'{self.pub_date.isoformat()}{self.author.id}'
                     .encode('utf-8')).hexdigest())[:MAX_HASH_LENGTH]
-        super().save(*args, **kwargs)
+            # Сохраняем только short_link
+            super().save(update_fields=['short_link'])
+        else:
+            super().save(*args, **kwargs)
 
     class Meta:
-        ordering = ('created_at',)
+        ordering = ('pub_date',)
         default_related_name = 'recipes'
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
@@ -127,38 +134,94 @@ class Recipies(models.Model):
     def __str__(self):
         return self.name
 
-
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
-        Recipies,
+        Recipie,
         on_delete=models.CASCADE,
         verbose_name='Рецепт',
+        related_name='recipe_ingredients'  # Уже правильно
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
         verbose_name='Ингредиент',
+        related_name='recipe_ingredients'  # Добавлено для симметрии
     )
     amount = models.PositiveSmallIntegerField(
         'Количество',
-        validators=[
-            MinValueValidator(
-                1,
-                'Количество не может быть меньше 1'
-            )
-        ]
+        validators=(
+            MinValueValidator(1, 'Количество не может быть меньше 1'),
+        )
     )
 
     class Meta:
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецептах'
-        defualt_related_name = 'recipe_ingredients'
-        constraints = (
+        constraints = [
             models.UniqueConstraint(
-                fields=('recipe', 'ingredient'),
-                name='unique_ingredient_in_recipe'
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredient_in_recipe'  # Теперь имя уникально
             )
-        )
+        ]
 
     def __str__(self):
         return f'{self.ingredient.name} - {self.amount}'
+
+class Favorite(models.Model):
+    recipe = models.ForeignKey(
+        Recipie,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт в избранном',
+        related_name='favorites'  # Изменено related_name
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='У кого в избранном',
+        related_name='favorites'  # Добавлено related_name
+    )
+
+    class Meta:
+        verbose_name = 'Рецепт в избранном'
+        verbose_name_plural = 'Рецепты в избранных'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_user_recipe_in_favorites'  # Уникальное имя ограничения
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.recipe.name}'
+
+
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name='shopping_carts'  # Лучше использовать множественное число
+    )
+    recipe = models.ForeignKey(
+        Recipie,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт в корзине',
+        related_name='in_shopping_carts'  # Лучше использовать множественное число
+    )
+    added_at = models.DateTimeField(
+        'Дата добавления',
+        auto_now_add=True
+    )
+
+    class Meta:
+        verbose_name = 'Корзина покупок'
+        verbose_name_plural = 'Корзины покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_recipe_in_user_shopping_cart'  # Уточненное имя
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.recipe.name}'
