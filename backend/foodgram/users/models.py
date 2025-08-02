@@ -23,7 +23,7 @@ class MyUser(AbstractUser):
         help_text='Адрес электронной почты',
     )
     username = models.CharField(
-        'Юзернейм',
+        'Username',
         max_length=MAX_NAME_FIELDS_LENTGH,
         unique=True,
         blank=False,
