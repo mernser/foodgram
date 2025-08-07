@@ -172,35 +172,3 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.recipe.name}'
-
-
-# class ShoppingCart(models.Model):
-#     user = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#         verbose_name='Пользователь',
-#         related_name='shopping_carts'  # Лучше использовать множественное число
-#     )
-#     recipe = models.ForeignKey(
-#         Recipie,
-#         on_delete=models.CASCADE,
-#         verbose_name='Рецепт в корзине',
-#         related_name='in_shopping_carts'  # Лучше использовать множественное число
-#     )
-#     added_at = models.DateTimeField(
-#         'Дата добавления',
-#         auto_now_add=True
-#     )
-
-#     class Meta:
-#         verbose_name = 'Корзина покупок'
-#         verbose_name_plural = 'Корзины покупок'
-#         constraints = [
-#             models.UniqueConstraint(
-#                 fields=['user', 'recipe'],
-#                 name='unique_recipe_in_user_shopping_cart'  # Уточненное имя
-#             )
-#         ]
-
-#     def __str__(self):
-#         return f'{self.user.username} - {self.recipe.name}'

@@ -7,3 +7,5 @@ MAX_RECIPE_NAME_LENGTH = 256
 MIN_RECIPE_LENGTH_NAME = 1
 MAX_LINK_LENGTH = 64
 MAX_HASH_LENGTH = 10
+ERROR_ALREADY_FAVORITED = 'Ошибка добавления: рецепт уже в избранном.'
+ERROR_NO_RECIPE_FAVORITED = 'Рецепта нет в избранном.'

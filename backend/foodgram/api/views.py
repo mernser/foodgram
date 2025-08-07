@@ -1,7 +1,11 @@
-from api.models import Tag, Ingredient, Recipie
+from api.models import Tag, Ingredient, Recipie, Favorite
 from api.serializers import (TagSerializer,
                              IngredientSerializer, RecipeSerializer,
+                             FavoriteRecipeSerializer, Recipie
                              )
+from django.shortcuts import get_object_or_404
+from foodgram.constants import (ERROR_ALREADY_FAVORITED,
+                                ERROR_NO_RECIPE_FAVORITED,)
 from rest_framework import permissions, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -23,11 +27,41 @@ class IngredientViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
 
+
 # нейрослоуп
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipie.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    # def perform_create(self, serializer):
-    #     serializer.save(author=self.request.user)
+    @action(
+        detail=True,
+        methods=('post', 'delete',),
+        permission_classes=(permissions.IsAuthenticated,),
+        url_path='favorite'
+    )
+    def favorite(self, request, pk=None):
+        recipe = get_object_or_404(Recipie, pk=pk)
+        user = request.user
+        favorite = Favorite.objects.filter(user=user, recipe=recipe)
+
+        if request.method == 'POST':
+            if favorite:
+                return Response(
+                    {'errors': ERROR_ALREADY_FAVORITED},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            Favorite.objects.create(user=user, recipe=recipe)
+            serializer = FavoriteRecipeSerializer(
+                recipe,
+                context={'request': request}
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif request.method == 'DELETE':
+            if not favorite:
+                return Response(
+                    {'errors': ERROR_NO_RECIPE_FAVORITED},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            favorite.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)

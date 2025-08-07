@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from api.models import (Tag, Ingredient,
-                        Recipie,)
+                        Recipie, Favorite)
 from users.serializers import UserProfileSerilizer, Base64ImageField
 User = get_user_model()
 
@@ -31,3 +31,16 @@ class RecipeSerializer(serializers.ModelSerializer):
             'id', 'author', 'tags',
             'name', 'image', 'text', 'cooking_time',
         )
+
+
+class FavoriteRecipeSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Recipie
+        fields = ('id', 'name', 'image', 'cooking_time',)
+
+    def get_image(self, obj):
+        if obj.image:
+            return self.context['request'].build_absolute_uri(obj.image.url)
+        return None

@@ -11,13 +11,14 @@ User = get_user_model()
 
 class CustomUserViewSet(UserViewSet):
     @action(detail=True,
-            methods=('delete'),
+            methods=('delete',),
             permission_classes=(IsAuthenticated,),
             url_path='avatar')
     def avatar_delete(self, request):
-        if request.user.avatar:
-            request.user.avatar.delete()
-            request.user.avatar = None
+        user_avatar = request.user.avatar
+        if user_avatar:
+            user_avatar.delete()
+            user_avatar = None
             request.user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
