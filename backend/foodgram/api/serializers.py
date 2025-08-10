@@ -22,15 +22,19 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    author = UserProfileSerilizer(read_only=True)
     image = Base64ImageField(required=False)
+    author = UserProfileSerilizer(read_only=True)
 
     class Meta:
         model = Recipie
         fields = (
-            'id', 'author', 'tags',
+            'id', 'tags', 'author',
             'name', 'image', 'text', 'cooking_time',
         )
+
+    def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
+        return super().create(validated_data)
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):

@@ -4,7 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
-from .serializers import AvatarUpdateSerializer
+from .serializers import AvatarUpdateSerializer, UserProfileSerilizer
+from .models import Subscription
+from .pagination import SubscriptionsPageNumberPagination
 
 User = get_user_model()
 
@@ -40,3 +42,23 @@ class CustomUserViewSet(UserViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomSubscriptionViewSet(UserViewSet):
+    pagination_class = SubscriptionsPageNumberPagination
+
+    @action(detail=False,
+            methods=('get',),
+            permission_classes=(IsAuthenticated,),
+            url_path='users/subscriptions')
+    def subscriptions(self, request):
+        subscriptions = User.objects.filter(
+            subscribed_to__follower=request.user
+        )
+        page = self.paginate_queryset(subscriptions)
+        serializer = UserProfileSerilizer(
+            page,
+            many=True,
+            context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)

@@ -7,6 +7,7 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     list_filter = ('username', 'email')
+    list_editable = ('username', 'email', 'first_name', 'last_name')
     empty_value_display = '-'
 
 

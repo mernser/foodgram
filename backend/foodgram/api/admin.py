@@ -1,9 +1,18 @@
 from django.contrib import admin
-from api.models import Recipie, Tag
+from api.models import Recipie, Tag, Ingredient
 
 
 @admin.register(Recipie)
 class RecipieAdmin(admin.ModelAdmin):
+    pass
+    # list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
+    # search_fields = ('username', 'email', 'first_name', 'last_name')
+    # list_filter = ('username', 'email')
+    # empty_value_display = '-'
+
+
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
     pass
     # list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
     # search_fields = ('username', 'email', 'first_name', 'last_name')
