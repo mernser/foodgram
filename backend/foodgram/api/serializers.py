@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from api.models import (Tag, Ingredient,
                         Recipie, Favorite)
-from users.serializers import UserProfileSerilizer, Base64ImageField
+from users.serializers import UserProfileSerializer, Base64ImageField
 User = get_user_model()
 
 
@@ -23,7 +23,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=False)
-    author = UserProfileSerilizer(read_only=True)
+    author = UserProfileSerializer(read_only=True)
 
     class Meta:
         model = Recipie

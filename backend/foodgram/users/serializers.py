@@ -29,7 +29,10 @@ class UserSignUpSerializer(UserCreateSerializer):
                   'last_name', 'password')
 
 
-class UserProfileSerilizer(UserSerializer):
+class UserProfileSerializer(UserSerializer):
+    '''
+    Выдача обычного объекта модели юзер
+    '''
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -44,6 +47,36 @@ class UserProfileSerilizer(UserSerializer):
             follower=self.context.get('request').user,
             subscribed_to=obj
         ).exists()
+
+
+class UserProfileListRecipesSerilizer(UserProfileSerializer):
+    '''
+    Выдача обычного объекта моедли юзер с ограничением на количестве рецептов
+    Сделать наследование
+    '''
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta(UserProfileSerializer.Meta):
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'avatar',
+                  'recipes', 'recipes_count',)
+
+    def get_recipes(self, obj):
+        from api.serializers import FavoriteRecipeSerializer
+        recipes_limit = self.context.get('recipes_limit')
+        recipes = obj.recipes.all()
+        if recipes_limit:
+            try:
+                recipes = recipes[:int(recipes_limit)]
+            except (ValueError, TypeError):
+                pass
+        return FavoriteRecipeSerializer(recipes,
+                                        many=True,
+                                        context=self.context).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
 
 
 class AvatarUpdateSerializer(serializers.ModelSerializer):

@@ -9,3 +9,5 @@ MAX_LINK_LENGTH = 64
 MAX_HASH_LENGTH = 10
 ERROR_ALREADY_FAVORITED = 'Ошибка добавления: рецепт уже в избранном.'
 ERROR_NO_RECIPE_FAVORITED = 'Рецепта нет в избранном.'
+ERROR_ALREADY_SUBSCRIBED = 'Ошибка подписки: вы уже подписаны на пользователя'
+ERROR_SELF_SUBSCIRPTION = 'Ошибка подписки: нельзя подписаться на самого себя'
