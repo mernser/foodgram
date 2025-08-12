@@ -1,11 +1,12 @@
-from api.models import Tag, Ingredient, Recipie, Favorite
+from api.models import Tag, Ingredient, Recipie, Favorite, ShoppingCart
 from api.serializers import (TagSerializer,
                              IngredientSerializer, RecipeSerializer,
-                             FavoriteRecipeSerializer, Recipie
+                             FavoriteRecipeSerializer
                              )
 from django.shortcuts import get_object_or_404
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
-                                ERROR_NO_RECIPE_FAVORITED,)
+                                ERROR_NO_RECIPE_FAVORITED,
+                                ERROR_ALREADY_IN_SHOPPINGCART,)
 from rest_framework import permissions, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -28,7 +29,43 @@ class IngredientViewSet(viewsets.ModelViewSet):
     search_fields = ('^name',)
 
 
-# нейрослоуп
+class ShoppingCartViewSet(viewsets.ModelViewSet):
+    serializer_class = FavoriteRecipeSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+    def create(self, request, *args, **kwargs):
+        recipe = get_object_or_404(Recipie, pk=kwargs.get('pk'))
+        if ShoppingCart.objects.filter(
+                user=request.user,
+                recipe=recipe
+        ).exists():
+            return Response(
+                {'detail': ERROR_ALREADY_IN_SHOPPINGCART},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        ShoppingCart.objects.create(
+            user=request.user,
+            recipe=recipe
+        )
+        serializer = FavoriteRecipeSerializer(
+            recipe,
+            context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        recipe = get_object_or_404(
+            Recipie,
+            pk=kwargs.get('pk')
+        )
+        remove_item = get_object_or_404(
+            ShoppingCart,
+            user=request.user,
+            recipe=recipe)
+        remove_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipie.objects.all()
     serializer_class = RecipeSerializer

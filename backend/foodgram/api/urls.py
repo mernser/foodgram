@@ -2,12 +2,12 @@ from django.urls import include, path
 from rest_framework import routers
 from users.views import (CustomUserViewSet,
                          CustomSubscriptionViewSet, SubscriptionViewSet)
-from api.views import TagViewSet, IngredientViewSet, RecipeViewSet
+from api.views import (TagViewSet, IngredientViewSet,
+                       RecipeViewSet, ShoppingCartViewSet)
 
 router = routers.SimpleRouter()
 router.register('tags', TagViewSet, basename='tags')
 router.register('ingredients', IngredientViewSet, basename='ingredients')
-# 
 router.register('recipes', RecipeViewSet, basename='recipes')
 
 urlpatterns = [
@@ -20,6 +20,9 @@ urlpatterns = [
                                     'delete': 'avatar_delete'})),
     path('users/<int:pk>/subscribe/',
          SubscriptionViewSet.as_view({'post': 'create',
+                                      'delete': 'destroy'})),
+    path('recipes/<int:pk>/shopping_cart/',
+         ShoppingCartViewSet.as_view({'post': 'create',
                                       'delete': 'destroy'})),
     path('', include('djoser.urls')),
 ]

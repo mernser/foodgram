@@ -99,3 +99,12 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                      'recipes_limit': recipes_limit}
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        user_to_unsurbscribe = get_object_or_404(User, pk=kwargs.get('pk'))
+        record = get_object_or_404(
+            Subscription,
+            follower=request.user,
+            subscribed_to=user_to_unsurbscribe)
+        record.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
