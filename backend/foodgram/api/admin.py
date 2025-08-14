@@ -41,8 +41,7 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    pass
-    # list_display = ('pk', 'follower', 'subscribed_to')
+    list_display = ('pk', 'name', 'slug')
     # search_fields = ('follower', 'subscribed_to')
     # list_filter = ('follower', 'subscribed_to')
     # empty_value_display = '-'

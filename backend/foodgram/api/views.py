@@ -72,16 +72,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipie.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    # filterset_fields = ('author', 'tags',)
 
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
         author = self.request.query_params.get('author')
-        is_favorited = self.request.query_params.get('is_favorited')
-        is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
-        tags = self.request.query_params.get('tags')
-        
+        if author:
+            queryset = queryset.filter(author=author)
+        if user.is_authenticated:
+            is_favorited = self.request.query_params.get('is_favorited')
+            is_in_shopping_cart = self.request.query_params.get(
+                'is_in_shopping_cart'
+            )
+            if is_favorited and int(is_favorited):
+                queryset = queryset.filter(favorites_by__user=user)
+            if is_in_shopping_cart and int(is_in_shopping_cart):
+                queryset = queryset.filter(cart_owners__user=user)
+        tags = self.request.query_params.getlist('tags')
+        if tags:
+            queryset = queryset.filter(tags__slug__in=tags).distinct()
+        return queryset
 
     @action(
         detail=True,
