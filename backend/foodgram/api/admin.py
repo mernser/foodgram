@@ -5,10 +5,13 @@ from api.models import Recipie, Tag, Ingredient, Favorite, ShoppingCart
 @admin.register(Recipie)
 class RecipieAdmin(admin.ModelAdmin):
     # list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
-    list_display = ('pk', 'name', 'author', 'text', 'cooking_time',)
+    list_display = ('pk', 'name', 'author', 'text', 'cooking_time', 'display_tags')
     # search_fields = ('username', 'email', 'first_name', 'last_name')
     # list_filter = ('username', 'email')
     # empty_value_display = '-'
+    @admin.display(description='Tags')
+    def display_tags(self, obj):
+        return ", ".join([tag.name for tag in obj.tags.all()])
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):

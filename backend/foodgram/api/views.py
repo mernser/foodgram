@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
                                 ERROR_NO_RECIPE_FAVORITED,
                                 ERROR_ALREADY_IN_SHOPPINGCART,)
+from users.pagination import SubscriptionsPageNumberPagination
 from rest_framework import permissions, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -67,9 +68,20 @@ class ShoppingCartViewSet(viewsets.ModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    pagination_class = SubscriptionsPageNumberPagination
     queryset = Recipie.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    # filterset_fields = ('author', 'tags',)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        author = self.request.query_params.get('author')
+        is_favorited = self.request.query_params.get('is_favorited')
+        is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
+        tags = self.request.query_params.get('tags')
+        
 
     @action(
         detail=True,
