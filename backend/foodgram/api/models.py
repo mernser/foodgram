@@ -1,8 +1,10 @@
 import hashlib
 
+
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 from foodgram.constants import (MAX_TAG_LENGTH,
                                 MAX_INGRIDIENT_NAME_LENGTH,
@@ -93,15 +95,40 @@ class Recipie(models.Model):
         'Дата публикации',
         auto_now_add=True
     )
-    # ingredients = models.ManyToManyField(
-    #     Ingredient,
-    #     through='RecipeIngredient',
-    #     verbose_name='Ингредиенты',
-    # )
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='RecipeIngredient',
+        verbose_name='Ингредиенты',
+        blank=False,
+    )
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Теги'
     )
+    short_link = models.CharField(
+        'Ссылка на рецепт',
+        max_length=MAX_LINK_LENGTH,
+        unique=True,
+        blank=False,
+    )
+
+    def generate_short_link(self):
+        base_str = f"{timezone.now().timestamp()}{self.id if self.id else ''}"
+        return hashlib.md5(base_str.encode()).hexdigest()[:MAX_HASH_LENGTH]
+
+    def clean(self):
+        if not self.short_link:
+            self.short_link = self.generate_short_link()
+            i = 1
+            original_url = self.short_link
+            while Recipie.objects.filter(short_link=self.short_link
+                                         ).exclude(pk=self.pk).exists():
+                self.short_link = f'{original_url[:(MAX_HASH_LENGTH-1)]}{i}'
+                i += 1
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ('pub_date',)
@@ -112,38 +139,39 @@ class Recipie(models.Model):
     def __str__(self):
         return self.name
 
-# class RecipeIngredient(models.Model):
-#     recipe = models.ForeignKey(
-#         Recipie,
-#         on_delete=models.CASCADE,
-#         verbose_name='Рецепт',
-#         related_name='recipe_ingredients'  # Уже правильно
-#     )
-#     ingredient = models.ForeignKey(
-#         Ingredient,
-#         on_delete=models.CASCADE,
-#         verbose_name='Ингредиент',
-#         related_name='recipe_ingredients'  # Добавлено для симметрии
-#     )
-#     amount = models.PositiveSmallIntegerField(
-#         'Количество',
-#         validators=(
-#             MinValueValidator(1, 'Количество не может быть меньше 1'),
-#         )
-#     )
 
-#     class Meta:
-#         verbose_name = 'Ингредиент в рецепте'
-#         verbose_name_plural = 'Ингредиенты в рецептах'
-#         constraints = [
-#             models.UniqueConstraint(
-#                 fields=['recipe', 'ingredient'],
-#                 name='unique_ingredient_in_recipe'  # Теперь имя уникально
-#             )
-#         ]
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(
+        Recipie,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+        related_name='recipe_ingredients'
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name='Ингредиент',
+        related_name='recipe_ingredients'
+    )
+    amount = models.PositiveSmallIntegerField(
+        'Количество',
+        validators=(
+            MinValueValidator(1, 'Количество не может быть меньше 1'),
+        )
+    )
 
-#     def __str__(self):
-#         return f'{self.ingredient.name} - {self.amount}'
+    class Meta:
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецептах'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('recipe', 'ingredient'),
+                name='unique_ingredient_in_recipe'
+            ),
+        )
+
+    def __str__(self):
+        return f'{self.ingredient.name} - {self.amount}'
 
 
 class Favorite(models.Model):

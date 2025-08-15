@@ -1,17 +1,29 @@
 from django.contrib import admin
-from api.models import Recipie, Tag, Ingredient, Favorite, ShoppingCart
+from api.models import Recipie, Tag, Ingredient, Favorite, ShoppingCart, RecipeIngredient
+
+
+class RecipeIngredientInline(admin.TabularInline):
+    model = RecipeIngredient
+    extra = 1
 
 
 @admin.register(Recipie)
 class RecipieAdmin(admin.ModelAdmin):
-    # list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
-    list_display = ('pk', 'name', 'author', 'text', 'cooking_time', 'display_tags')
-    # search_fields = ('username', 'email', 'first_name', 'last_name')
-    # list_filter = ('username', 'email')
-    # empty_value_display = '-'
+    list_display = ('pk', 'name', 'author', 'text', 'cooking_time', 'display_tags', 'short_link')
+    list_filter = ('author', 'tags', 'pub_date')
+    list_display_links = ('pk', 'name')  # Какие поля должны быть ссылками
+    inlines = (RecipeIngredientInline,)  # Добавляем инлайн с ингредиентами
+    readonly_fields = ('pub_date', 'short_link')
+    empty_value_display = '-'
+
     @admin.display(description='Tags')
     def display_tags(self, obj):
         return ", ".join([tag.name for tag in obj.tags.all()])
+
+
+# @admin.register(RecipeIngredient)
+# class RecipeIngredient(admin.ModelAdmin):
+#     list_display = ('pk', 'name',)
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):

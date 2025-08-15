@@ -7,7 +7,6 @@ from django.shortcuts import get_object_or_404
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
                                 ERROR_NO_RECIPE_FAVORITED,
                                 ERROR_ALREADY_IN_SHOPPINGCART,)
-from users.pagination import SubscriptionsPageNumberPagination
 from rest_framework import permissions, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -68,30 +67,9 @@ class ShoppingCartViewSet(viewsets.ModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    pagination_class = SubscriptionsPageNumberPagination
     queryset = Recipie.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user = self.request.user
-        author = self.request.query_params.get('author')
-        if author:
-            queryset = queryset.filter(author=author)
-        if user.is_authenticated:
-            is_favorited = self.request.query_params.get('is_favorited')
-            is_in_shopping_cart = self.request.query_params.get(
-                'is_in_shopping_cart'
-            )
-            if is_favorited and int(is_favorited):
-                queryset = queryset.filter(favorites_by__user=user)
-            if is_in_shopping_cart and int(is_in_shopping_cart):
-                queryset = queryset.filter(cart_owners__user=user)
-        tags = self.request.query_params.getlist('tags')
-        if tags:
-            queryset = queryset.filter(tags__slug__in=tags).distinct()
-        return queryset
 
     @action(
         detail=True,
