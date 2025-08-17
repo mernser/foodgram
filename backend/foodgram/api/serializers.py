@@ -23,13 +23,17 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredient.id')
+    id = serializers.ReadOnlyField(source='ingredient.id') # иначе здесь был бы целиком объект ингредиента, а так только id
     name = serializers.ReadOnlyField(source='ingredient.name')
+    # идем по цепочке
+    # recpieingredient = RecipeIngredient.objects.get(id=1)
+    # recpieingredient.ingredient.name
+    # для метода модели например это будет post.get_upper_title
     measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
 
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'name', 'measurement_unit', 'amount')
+        fields = ('id', 'name', 'measurement_unit', 'amount') # amount уже есть в модели RecipeIngredient
 
 
 class RecipeSerializer(serializers.ModelSerializer):
