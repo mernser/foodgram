@@ -1,7 +1,7 @@
 from api.models import Tag, Ingredient, Recipie, Favorite, ShoppingCart
 from api.serializers import (TagSerializer,
                              IngredientSerializer, RecipeSerializer,
-                             FavoriteRecipeSerializer
+                             FavoriteRecipeSerializer, CreateRecipeSerializer
                              )
 from django.shortcuts import get_object_or_404
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
@@ -70,6 +70,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipie.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CreateRecipeSerializer
+        return super().get_serializer_class()
 
     def get_queryset(self):
         queryset = super().get_queryset()

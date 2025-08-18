@@ -37,11 +37,11 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField(required=False)
+    image = Base64ImageField(required=True)
     author = UserProfileSerializer(read_only=True)
     tags = TagSerializer(many=True)
-    is_in_shopping_cart = serializers.SerializerMethodField()
-    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    is_favorited = serializers.SerializerMethodField(read_only=True)
     ingredients = RecipeIngredientSerializer(many=True, source='recipe_ingredients')
 
     class Meta:
@@ -68,6 +68,38 @@ class RecipeSerializer(serializers.ModelSerializer):
         if self.context['request'].user.is_anonymous:
             return False
         return Favorite.objects.filter(user=user, recipe=obj).exists()
+
+
+class CreateRecipeSerializer(RecipeSerializer):
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all()
+    )
+
+    class Meta(RecipeSerializer.Meta):
+        fields = (
+            'tags', 'ingredients',
+            'name', 'text', 'image', 'cooking_time',
+        )
+
+    def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
+        print(validated_data)
+        ingredients = validated_data.pop('recipe_ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipie.objects.create(**validated_data)
+        recipe.tags.set(tags)
+        recipe_ingredients = [
+            RecipeIngredient(
+                recipe=recipe,
+                ingredient=ingredient['ingredient'],
+                amount=ingredient['amount']
+            )
+            for ingredient in ingredients
+        ]
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+        return recipe
+        # return super().create(validated_data)
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):

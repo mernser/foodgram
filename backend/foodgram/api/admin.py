@@ -35,8 +35,8 @@ class ShoppingCartAdmin(admin.ModelAdmin):
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'name')
     pass
-    # list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
     # search_fields = ('username', 'email', 'first_name', 'last_name')
     # list_filter = ('username', 'email')
     # empty_value_display = '-'
