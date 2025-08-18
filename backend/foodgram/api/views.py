@@ -71,6 +71,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        params = self.request.query_params
+        if user.is_authenticated:
+            if params.get('is_favorited') and int(params.get('is_favorited')) == 1:
+                queryset = queryset.filter(id__in=Favorite.objects.filter(user=user).values('recipe'))
+            if params.get('is_in_shopping_cart') and int(params.get('is_in_shopping_cart')) == 1:
+                queryset = queryset.filter(id__in=ShoppingCart.objects.filter(user=user).values('recipe'))
+        if author_id := params.get('author'):
+            queryset = queryset.filter(author=author_id)
+        if tags := params.getlist('tags'):
+            queryset = queryset.filter(tags__slug__in=tags).distinct()
+        return queryset
+
     @action(
         detail=True,
         methods=('post', 'delete',),
