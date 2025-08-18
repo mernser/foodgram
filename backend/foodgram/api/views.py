@@ -76,10 +76,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         params = self.request.query_params
         if user.is_authenticated:
-            if params.get('is_favorited') and int(params.get('is_favorited')) == 1:
-                queryset = queryset.filter(id__in=Favorite.objects.filter(user=user).values('recipe'))
-            if params.get('is_in_shopping_cart') and int(params.get('is_in_shopping_cart')) == 1:
-                queryset = queryset.filter(id__in=ShoppingCart.objects.filter(user=user).values('recipe'))
+            is_favorited = params.get('is_favorited')
+            if is_favorited and is_favorited == '1':
+                queryset = queryset.filter(
+                    id__in=Favorite.objects.filter(user=user).values('recipe')
+                )
+            is_in_shopping_cart = params.get('is_in_shopping_cart')
+            if is_in_shopping_cart and is_in_shopping_cart == '1':
+                queryset = queryset.filter(
+                    id__in=ShoppingCart.objects
+                    .filter(user=user).values('recipe')
+                )
         if author_id := params.get('author'):
             queryset = queryset.filter(author=author_id)
         if tags := params.getlist('tags'):
