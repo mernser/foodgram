@@ -3,7 +3,8 @@ from rest_framework import routers
 from users.views import (CustomUserViewSet,
                          CustomSubscriptionViewSet, SubscriptionViewSet)
 from api.views import (TagViewSet, IngredientViewSet,
-                       RecipeViewSet, ShoppingCartViewSet)
+                       RecipeViewSet, ShoppingCartViewSet,
+                       get_recipe_short_link)
 
 router = routers.SimpleRouter()
 router.register('tags', TagViewSet, basename='tags')
@@ -20,9 +21,11 @@ urlpatterns = [
                                     'delete': 'avatar_delete'})),
     path('users/<int:pk>/subscribe/',
          SubscriptionViewSet.as_view({'post': 'create',
-                                      'delete': 'destroy'})),
+                                      'delete': 'delete'})),
     path('recipes/<int:pk>/shopping_cart/',
          ShoppingCartViewSet.as_view({'post': 'create',
-                                      'delete': 'destroy'})),
+                                      'delete': 'delete'})),
+    path('recipes/<int:pk>/get-link/',
+         get_recipe_short_link),
     path('', include('djoser.urls')),
 ]

@@ -1,14 +1,14 @@
 from api.models import Tag, Ingredient, Recipie, Favorite, ShoppingCart
 from api.serializers import (TagSerializer,
                              IngredientSerializer, RecipeSerializer,
-                             FavoriteRecipeSerializer, CreateRecipeSerializer
-                             )
-from django.shortcuts import get_object_or_404
+                             FavoriteRecipeSerializer, CreateRecipeSerializer,)
+
+from django.shortcuts import get_object_or_404, redirect
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
                                 ERROR_NO_RECIPE_FAVORITED,
                                 ERROR_ALREADY_IN_SHOPPINGCART,)
 from rest_framework import permissions, viewsets, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -53,7 +53,7 @@ class ShoppingCartViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def destroy(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         recipe = get_object_or_404(
             Recipie,
             pk=kwargs.get('pk')
@@ -72,7 +72,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action in ('create', 'update', 'partial_update'):
             return CreateRecipeSerializer
         return super().get_serializer_class()
 
@@ -129,3 +129,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
             favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+def short_link_redirect(request, short_link):
+    recipe = get_object_or_404(Recipie, short_link=short_link)
+    return redirect('recipes-detail', pk=recipe.pk)
+
+
+@api_view(['GET'])
+def get_recipe_short_link(request, pk):
+    recipe = get_object_or_404(Recipie, id=pk)
+    short_link_url = request.build_absolute_uri(f'/s/{recipe.short_link}')
+    return Response({'short-link': short_link_url})

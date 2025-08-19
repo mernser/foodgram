@@ -36,6 +36,15 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount') # amount уже есть в модели RecipeIngredient
 
 
+class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+    amount = serializers.IntegerField(min_value=1)
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'amount')
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=True)
     author = UserProfileSerializer(read_only=True)
@@ -53,9 +62,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             'ingredients',
         )
 
-    def create(self, validated_data):
-        validated_data['author'] = self.context['request'].user
-        return super().create(validated_data)
+    # def create(self, validated_data):
+    #     validated_data['author'] = self.context['request'].user
+    #     return super().create(validated_data)
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context['request'].user
@@ -75,6 +84,7 @@ class CreateRecipeSerializer(RecipeSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
+    ingredients = CreateRecipeIngredientSerializer(many=True)
 
     class Meta(RecipeSerializer.Meta):
         fields = (
@@ -84,22 +94,47 @@ class CreateRecipeSerializer(RecipeSerializer):
 
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
-        print(validated_data)
-        ingredients = validated_data.pop('recipe_ingredients')
+        ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipie.objects.create(**validated_data)
         recipe.tags.set(tags)
+        #Создание экземпляров объектов в памяти (RecipeIngredient(...))
+        # это конструктор класса, который создает объект в памяти Python.
         recipe_ingredients = [
             RecipeIngredient(
                 recipe=recipe,
-                ingredient=ingredient['ingredient'],
+                ingredient=ingredient['id'],
                 amount=ingredient['amount']
             )
             for ingredient in ingredients
         ]
+        # RecipeIngredient.objects.create() Здесь и создается объект, и сразу делается запрос к БД!
+        # А вот ниже это менеджер моделей, который выполняет одну операцию массовой вставки с уже готовыми данными.
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
         return recipe
-        # return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if tags is not None:
+            instance.tags.set(tags)
+        if ingredients is not None:
+            instance.recipe_ingredients.all().delete()
+            recipe_ingredients = []
+            for ingredient in ingredients:
+                recipe_ingredients.append(RecipeIngredient(
+                    recipe=instance,
+                    ingredient=ingredient['id'],
+                    amount=ingredient['amount']
+                ))
+            RecipeIngredient.objects.bulk_create(recipe_ingredients)
+        return instance
+
+    def to_representation(self, instance):
+        return RecipeSerializer(instance, context=self.context).data
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):
@@ -112,4 +147,16 @@ class FavoriteRecipeSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         if obj.image:
             return self.context['request'].build_absolute_uri(obj.image.url)
+        return None
+
+
+class ShortLinkSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipie
+        fields = ('short_link',)
+
+    def get_short_link(self, obj):
+        if obj.short_link:
+            return self.context['request'].build_absolute_uri(obj.short_link)
         return None

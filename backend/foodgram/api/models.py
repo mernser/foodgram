@@ -116,7 +116,7 @@ class Recipie(models.Model):
         base_str = f"{timezone.now().timestamp()}{self.id if self.id else ''}"
         return hashlib.md5(base_str.encode()).hexdigest()[:MAX_HASH_LENGTH]
 
-    def clean(self):
+    def save(self, *args, **kwargs):
         if not self.short_link:
             self.short_link = self.generate_short_link()
             i = 1
@@ -125,9 +125,6 @@ class Recipie(models.Model):
                                          ).exists():
                 self.short_link = f'{original_url[:(MAX_HASH_LENGTH-1)]}{i}'
                 i += 1
-
-    def save(self, *args, **kwargs):
-        self.clean()
         super().save(*args, **kwargs)
 
     class Meta:
