@@ -5,8 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
 from django.shortcuts import get_object_or_404
-from .serializers import (AvatarUpdateSerializer, UserProfileSerializer,
+from .serializers import (AvatarUpdateSerializer,
                           UserProfileListRecipesSerilizer)
+from foodgram.permissions import IsOwner
 from .models import Subscription
 from .pagination import SubscriptionsPageNumberPagination
 from foodgram.constants import (ERROR_ALREADY_SUBSCRIBED,
@@ -17,9 +18,10 @@ User = get_user_model()
 
 
 class CustomUserViewSet(UserViewSet):
+    permission_classes = (IsAuthenticated, IsOwner,)
+
     @action(detail=True,
             methods=('delete',),
-            permission_classes=(IsAuthenticated,),
             url_path='avatar')
     def avatar_delete(self, request):
         user_avatar = request.user.avatar
@@ -34,7 +36,6 @@ class CustomUserViewSet(UserViewSet):
 
     @action(detail=True,
             methods=('put',),
-            permission_classes=(IsAuthenticated,),
             url_path='avatar')
     def avatar_update(self, request):
         serializer = AvatarUpdateSerializer(

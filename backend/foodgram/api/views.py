@@ -7,13 +7,15 @@ from django.shortcuts import get_object_or_404, redirect
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
                                 ERROR_NO_RECIPE_FAVORITED,
                                 ERROR_ALREADY_IN_SHOPPINGCART,)
-from rest_framework import permissions, viewsets, filters
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework import status
+from foodgram.permissions import OwnerOrReadOnly
 
 
 class TagViewSet(viewsets.ModelViewSet):
+    http_method_names = ('get',)
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
@@ -21,12 +23,18 @@ class TagViewSet(viewsets.ModelViewSet):
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
+    http_method_names = ('get',)
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('^name',)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        name_startswith = self.request.query_params.get('name')
+        if name_startswith:
+            return queryset.filter(name__istartswith=name_startswith)
+        return queryset
 
 
 class ShoppingCartViewSet(viewsets.ModelViewSet):
@@ -69,7 +77,8 @@ class ShoppingCartViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipie.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          OwnerOrReadOnly)
 
     def get_serializer_class(self):
         if self.action in ('create', 'update', 'partial_update'):

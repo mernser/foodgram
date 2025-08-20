@@ -5,6 +5,13 @@ from api.models import (Tag, Ingredient,
                         Recipie, Favorite,
                         ShoppingCart, RecipeIngredient)
 from users.serializers import UserProfileSerializer, Base64ImageField
+
+from foodgram.constants import (ERROR_EMPTY_INGREDIENT,
+                                ERROR_DUBLICATE_INGREDIENT,
+                                ERROR_EMPTY_TAG,
+                                ERROR_DUBLICATE_TAG)
+
+
 User = get_user_model()
 
 
@@ -62,10 +69,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'ingredients',
         )
 
-    # def create(self, validated_data):
-    #     validated_data['author'] = self.context['request'].user
-    #     return super().create(validated_data)
-
     def get_is_in_shopping_cart(self, obj):
         user = self.context['request'].user
         if self.context['request'].user.is_anonymous:
@@ -82,15 +85,32 @@ class RecipeSerializer(serializers.ModelSerializer):
 class CreateRecipeSerializer(RecipeSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Tag.objects.all()
+        queryset=Tag.objects.all(),
+        required=True
     )
-    ingredients = CreateRecipeIngredientSerializer(many=True)
+    ingredients = CreateRecipeIngredientSerializer(many=True, required=True)
 
     class Meta(RecipeSerializer.Meta):
         fields = (
             'tags', 'ingredients',
             'name', 'text', 'image', 'cooking_time',
         )
+
+    def validate_ingredients(self, value):
+        if not value:
+            raise serializers.ValidationError(ERROR_EMPTY_INGREDIENT)
+        ingredient_ids = [item['id'] for item in value]
+        if len(ingredient_ids) != len(set(ingredient_ids)):
+            raise serializers.ValidationError(ERROR_DUBLICATE_INGREDIENT)
+        return value
+
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError(ERROR_EMPTY_TAG)
+        tags_ids = [item.id for item in value]
+        if len(tags_ids) != len(set(tags_ids)):
+            raise serializers.ValidationError(ERROR_DUBLICATE_TAG)
+        return value
 
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
@@ -119,18 +139,16 @@ class CreateRecipeSerializer(RecipeSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-        if tags is not None:
-            instance.tags.set(tags)
-        if ingredients is not None:
-            instance.recipe_ingredients.all().delete()
-            recipe_ingredients = []
-            for ingredient in ingredients:
-                recipe_ingredients.append(RecipeIngredient(
-                    recipe=instance,
-                    ingredient=ingredient['id'],
-                    amount=ingredient['amount']
-                ))
-            RecipeIngredient.objects.bulk_create(recipe_ingredients)
+        instance.tags.set(tags)
+        instance.recipe_ingredients.all().delete()
+        recipe_ingredients = []
+        for ingredient in ingredients:
+            recipe_ingredients.append(RecipeIngredient(
+                recipe=instance,
+                ingredient=ingredient['id'],
+                amount=ingredient['amount']
+            ))
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
         return instance
 
     def to_representation(self, instance):
