@@ -8,8 +8,10 @@ from users.serializers import UserProfileSerializer, Base64ImageField
 
 from foodgram.constants import (ERROR_EMPTY_INGREDIENT,
                                 ERROR_DUBLICATE_INGREDIENT,
+                                ERROR_NO_INGREDIENT,
                                 ERROR_EMPTY_TAG,
-                                ERROR_DUBLICATE_TAG)
+                                ERROR_DUBLICATE_TAG,
+                                ERROR_NO_TAG)
 
 
 User = get_user_model()
@@ -83,11 +85,13 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class CreateRecipeSerializer(RecipeSerializer):
+    # нам передают id тегов, query проверяет их наличие в бд
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all(),
         required=True
     )
+    # передают целиком id и amount
     ingredients = CreateRecipeIngredientSerializer(many=True, required=True)
 
     class Meta(RecipeSerializer.Meta):
@@ -95,6 +99,15 @@ class CreateRecipeSerializer(RecipeSerializer):
             'tags', 'ingredients',
             'name', 'text', 'image', 'cooking_time',
         )
+
+    def validate(self, data):
+        # при PATCH запросе если поля не передаются, то их и не валидируют
+        if self.context['request'].method == 'PATCH':
+            if 'tags' not in data:
+                raise serializers.ValidationError(ERROR_NO_TAG)
+            if 'ingredients' not in data:
+                raise serializers.ValidationError(ERROR_NO_INGREDIENT)
+        return data
 
     def validate_ingredients(self, value):
         if not value:
@@ -134,8 +147,8 @@ class CreateRecipeSerializer(RecipeSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients', None)
+        tags = validated_data.pop('tags', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
