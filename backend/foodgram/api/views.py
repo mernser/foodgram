@@ -1,9 +1,12 @@
-from api.models import Tag, Ingredient, Recipie, Favorite, ShoppingCart
+from api.models import (Tag, Ingredient, Recipie,
+                        Favorite, ShoppingCart, RecipeIngredient)
 from api.serializers import (TagSerializer,
                              IngredientSerializer, RecipeSerializer,
                              FavoriteRecipeSerializer, CreateRecipeSerializer,)
 
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect
+from django.http import HttpResponse
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
                                 ERROR_NO_RECIPE_FAVORITED,
                                 ERROR_ALREADY_IN_SHOPPINGCART,)
@@ -66,10 +69,12 @@ class ShoppingCartViewSet(viewsets.ModelViewSet):
             Recipie,
             pk=kwargs.get('pk')
         )
-        remove_item = get_object_or_404(
-            ShoppingCart,
+        remove_item = ShoppingCart.objects.filter(
             user=request.user,
-            recipe=recipe)
+            recipe=recipe
+        ).first()
+        if not remove_item:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         remove_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -138,6 +143,32 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
             favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=('get',),
+        detail=False,
+        url_path='download_shopping_cart',
+        permission_classes=(permissions.IsAuthenticated,),
+    )
+    def download_shopping_cart(self, request):
+        items = RecipeIngredient.objects.filter(
+            recipe__cart_owners__user=request.user
+        ).select_related('ingredient').values(
+            'ingredient__name',
+            'ingredient__measurement_unit',
+        ).annotate(total_amount=Sum('amount'))
+        content = ''
+        for item in items:
+            content += (
+                f"{item['ingredient__name']} "
+                f"({item['ingredient__measurement_unit']}) - "
+                f"{item['total_amount']}\n"
+            )
+        response = HttpResponse(content, content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename="ingredients_totals.txt"'
+        )
+        return response
 
 
 @api_view(['GET'])

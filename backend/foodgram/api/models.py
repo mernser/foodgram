@@ -204,12 +204,12 @@ class ShoppingCart(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Владелец корзины',
-        related_name='shopping_list')
+        related_name='shopping_list') # <- в модели User появляется поле cart_owners
     recipe = models.ForeignKey(
         Recipie,
         on_delete=models.CASCADE,
         verbose_name='Рецепт в корзине',
-        related_name='cart_owners')
+        related_name='cart_owners') # <- в модели Recipie появляется поле cart_owners
 
     class Meta:
         verbose_name = 'Рецепт в корзине'

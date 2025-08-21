@@ -11,7 +11,7 @@ from foodgram.permissions import IsOwner
 from .models import Subscription
 from .pagination import SubscriptionsPageNumberPagination
 from foodgram.constants import (ERROR_ALREADY_SUBSCRIBED,
-                                ERROR_SELF_SUBSCIRPTION,)
+                                ERROR_SELF_SUBSCRIPTION,)
 
 
 User = get_user_model()
@@ -89,7 +89,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             )
         if user_to_subscribe == request.user:
             return Response(
-                {'detail': ERROR_SELF_SUBSCIRPTION},
+                {'detail': ERROR_SELF_SUBSCRIPTION},
                 status=status.HTTP_400_BAD_REQUEST
             )
         Subscription.objects.create(follower=request.user,
@@ -102,10 +102,18 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
-        user_to_unsurbscribe = get_object_or_404(User, pk=kwargs.get('pk'))
-        record = get_object_or_404(
-            Subscription,
+        user_to_unsubscribe = get_object_or_404(User, pk=kwargs.get('pk'))
+        if not user_to_unsubscribe:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        subscription = Subscription.objects.filter(
             follower=request.user,
-            subscribed_to=user_to_unsurbscribe)
-        record.delete()
+            subscribed_to=user_to_unsubscribe
+        ).first()
+        if not subscription:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        subscription.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
