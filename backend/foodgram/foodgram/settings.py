@@ -142,10 +142,6 @@ DJOSER = {
     'HIDE_USERS': False,
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': False,
-    # 'PERMISSIONS': {
-    #     'user': ['rest_framework.permissions.IsAuthenticated'],
-    #     'user_list': ['rest_framework.permissions.AllowAny'],
-    # }
     'PERMISSIONS': {
         'user': [UserDetailPermission,],  # Просмотр других пользователей для всех
         'user_list': ['rest_framework.permissions.AllowAny'],  # Список пользователей для всех
