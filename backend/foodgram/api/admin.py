@@ -1,59 +1,64 @@
 from django.contrib import admin
-from api.models import Recipie, Tag, Ingredient, Favorite, ShoppingCart, RecipeIngredient
+from api.models import (Recipie, Tag, Ingredient,
+                        Favorite, ShoppingCart, RecipeIngredient)
+from django.db.models import Count
 
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
     extra = 1
+    min_num = 1
 
 
 @admin.register(Recipie)
 class RecipieAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'author', 'text', 'cooking_time', 'display_tags', 'short_link')
-    list_filter = ('author', 'tags', 'pub_date')
-    list_display_links = ('pk', 'name')  # Какие поля должны быть ссылками
-    inlines = (RecipeIngredientInline,)  # Добавляем инлайн с ингредиентами
-    readonly_fields = ('pub_date', 'short_link')
-    empty_value_display = '-'
+    list_display = ('name', 'author')
+    search_fields = ('name', 'username')
+    list_filter = ('tags',)
+    inlines = (RecipeIngredientInline,)
+    ordering = ('-pub_date',)
+    readonly_fields = ('get_favorites_count', 'short_link', 'pub_date')
 
-    @admin.display(description='Tags')
-    def display_tags(self, obj):
-        return ", ".join([tag.name for tag in obj.tags.all()])
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            favorites_count=Count('favorites_by')
+        )
 
-
-# @admin.register(RecipeIngredient)
-# class RecipeIngredient(admin.ModelAdmin):
-#     list_display = ('pk', 'name',)
-
-@admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
-    # list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
-    list_display = ('pk', 'user', 'recipe')
-    # search_fields = ('username', 'email', 'first_name', 'last_name')
-    # list_filter = ('username', 'email')
-    # empty_value_display = '-'
-
-@admin.register(Ingredient)
-class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name')
-    pass
-    # search_fields = ('username', 'email', 'first_name', 'last_name')
-    # list_filter = ('username', 'email')
-    # empty_value_display = '-'
-
-
-@admin.register(Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
-    pass
-    # list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
-    # search_fields = ('username', 'email', 'first_name', 'last_name')
-    # list_filter = ('username', 'email')
-    # empty_value_display = '-'
+    def get_favorites_count(self, obj):
+        return obj.favorites_count
+    get_favorites_count.short_description = 'Количество добавлений в избранное'
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'slug')
-    # search_fields = ('follower', 'subscribed_to')
-    # list_filter = ('follower', 'subscribed_to')
-    # empty_value_display = '-'
+    list_display = ('name', 'slug')
+    search_fields = ('name', 'slug')
+    ordering = ('name',)
+
+
+@admin.register(RecipeIngredient)
+class RecipeIngredientAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'ingredient', 'amount')
+    list_filter = ('recipe', 'ingredient')
+    search_fields = ('recipe__name', 'ingredient__name')
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    search_fields = ('user__username', 'recipe__name')
+    list_filter = ('user', 'recipe')
+
+
+@admin.register(ShoppingCart)
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    search_fields = ('user__username', 'recipe__name')
+    list_filter = ('user', 'recipe')
+
+
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
+    list_display = ('name', 'measurement_unit', )
+    list_filter = ('name', 'measurement_unit')
+    search_fields = ('name',)
