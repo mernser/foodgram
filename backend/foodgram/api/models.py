@@ -1,6 +1,5 @@
 import hashlib
 
-
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -204,12 +203,12 @@ class ShoppingCart(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Владелец корзины',
-        related_name='shopping_list') # <- в модели User появляется поле cart_owners
+        related_name='shopping_list')
     recipe = models.ForeignKey(
         Recipie,
         on_delete=models.CASCADE,
         verbose_name='Рецепт в корзине',
-        related_name='cart_owners') # <- в модели Recipie появляется поле cart_owners
+        related_name='cart_owners')
 
     class Meta:
         verbose_name = 'Рецепт в корзине'

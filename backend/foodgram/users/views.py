@@ -1,17 +1,19 @@
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet
+
 from rest_framework import status, viewsets
-from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import get_user_model
-from djoser.views import UserViewSet
-from django.shortcuts import get_object_or_404
-from .serializers import (AvatarUpdateSerializer,
-                          UserProfileListRecipesSerilizer)
-from foodgram.permissions import IsOwner
+from rest_framework.response import Response
+
 from .models import Subscription
 from .pagination import SubscriptionsPageNumberPagination
+from .serializers import (AvatarUpdateSerializer,
+                          UserProfileListRecipesSerilizer)
 from foodgram.constants import (ERROR_ALREADY_SUBSCRIBED,
                                 ERROR_SELF_SUBSCRIPTION,)
+from foodgram.permissions import IsOwner
 
 
 User = get_user_model()

@@ -32,17 +32,15 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredient.id') # иначе здесь был бы целиком объект ингредиента, а так только id
+    id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
-    # идем по цепочке
-    # recpieingredient = RecipeIngredient.objects.get(id=1) получаем объект
-    # recpieingredient.ingredient.name
-    # для метода модели например это будет post.get_upper_title
-    measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit'
+    )
 
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'name', 'measurement_unit', 'amount') # amount уже есть в модели RecipeIngredient
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
@@ -60,7 +58,10 @@ class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
     is_favorited = serializers.SerializerMethodField(read_only=True)
-    ingredients = RecipeIngredientSerializer(many=True, source='recipe_ingredients')
+    ingredients = RecipeIngredientSerializer(
+        many=True,
+        source='recipe_ingredients'
+    )
 
     class Meta:
         model = Recipie
@@ -85,13 +86,11 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class CreateRecipeSerializer(RecipeSerializer):
-    # нам передают id тегов, query проверяет их наличие в бд
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all(),
         required=True
     )
-    # передают целиком id и amount
     ingredients = CreateRecipeIngredientSerializer(many=True, required=True)
 
     class Meta(RecipeSerializer.Meta):
@@ -101,7 +100,6 @@ class CreateRecipeSerializer(RecipeSerializer):
         )
 
     def validate(self, data):
-        # при PATCH запросе если поля не передаются, то их и не валидируют
         if self.context['request'].method == 'PATCH':
             if 'tags' not in data:
                 raise serializers.ValidationError(ERROR_NO_TAG)
@@ -131,8 +129,6 @@ class CreateRecipeSerializer(RecipeSerializer):
         tags = validated_data.pop('tags')
         recipe = Recipie.objects.create(**validated_data)
         recipe.tags.set(tags)
-        #Создание экземпляров объектов в памяти (RecipeIngredient(...))
-        # это конструктор класса, который создает объект в памяти Python.
         recipe_ingredients = [
             RecipeIngredient(
                 recipe=recipe,
@@ -141,8 +137,6 @@ class CreateRecipeSerializer(RecipeSerializer):
             )
             for ingredient in ingredients
         ]
-        # RecipeIngredient.objects.create() Здесь и создается объект, и сразу делается запрос к БД!
-        # А вот ниже это менеджер моделей, который выполняет одну операцию массовой вставки с уже готовыми данными.
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
         return recipe
 

@@ -1,10 +1,11 @@
 from django.urls import include, path
 from rest_framework import routers
-from users.views import (CustomUserViewSet,
-                         CustomSubscriptionViewSet, SubscriptionViewSet)
+
 from api.views import (TagViewSet, IngredientViewSet,
                        RecipeViewSet, ShoppingCartViewSet,
                        get_recipe_short_link)
+from users.views import (CustomUserViewSet,
+                         CustomSubscriptionViewSet, SubscriptionViewSet)
 
 router = routers.SimpleRouter()
 router.register('tags', TagViewSet, basename='tags')

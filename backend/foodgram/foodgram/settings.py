@@ -1,24 +1,16 @@
+import os
 from pathlib import Path
 
 from .permissions import UserDetailPermission
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = os.getenv('SECRET_KEY', '')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+DEBUG = False
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-xhfk1gc)0h$((vs3*-b7h*48+5255py(sm^x^w8$2us=x8$#8v'
+ALLOWED_HOSTS = (os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')).split(',')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*', 'localhost']
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'users.apps.UsersConfig',
@@ -65,19 +57,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': f"django.db.backends.{os.getenv('DB', 'postgresql')}",
+        'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
+        'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', 'db'),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -95,30 +84,22 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = 'ru-RU'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
+
+USE_L10N = True
 
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
 STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
+STATIC_ROOT = BASE_DIR / 'collected_static'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# моя часть
 AUTH_USER_MODEL = 'users.MyUser'
 
 REST_FRAMEWORK = {
@@ -132,7 +113,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 6,
 }
 
-# Djoser settings
 DJOSER = {
     'SERIALIZERS': {
         'user': 'users.serializers.UserProfileSerializer',
@@ -143,11 +123,10 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': False,
     'PERMISSIONS': {
-        'user': [UserDetailPermission,],  # Просмотр других пользователей для всех
-        'user_list': ['rest_framework.permissions.AllowAny'],  # Список пользователей для всех
+        'user': [UserDetailPermission,],
+        'user_list': ['rest_framework.permissions.AllowAny'],
     }
 }
-
 
 AUTHENTICATION_BACKENDS = [
     "djoser.auth_backends.LoginFieldBackend",
