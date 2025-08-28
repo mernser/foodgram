@@ -175,7 +175,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def short_link_redirect(request, short_link):
     recipe = get_object_or_404(Recipie, short_link=short_link)
-    return redirect('recipes-detail', pk=recipe.pk)
+    return redirect(request.build_absolute_uri(f'/recipes/{recipe.pk}'))
 
 
 @api_view(['GET'])
