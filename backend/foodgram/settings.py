@@ -129,7 +129,7 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': False,
     'PERMISSIONS': {
-        'user': [UserDetailPermission,],
+        'user': [UserDetailPermission],
         'user_list': ['rest_framework.permissions.AllowAny'],
     }
 }
