@@ -1,18 +1,13 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from api.models import (Tag, Ingredient,
-                        Recipie, Favorite,
-                        ShoppingCart, RecipeIngredient)
-from users.serializers import UserProfileSerializer, Base64ImageField
-
-from foodgram.constants import (ERROR_EMPTY_INGREDIENT,
-                                ERROR_DUBLICATE_INGREDIENT,
-                                ERROR_NO_INGREDIENT,
-                                ERROR_EMPTY_TAG,
-                                ERROR_DUBLICATE_TAG,
+from api.models import (Favorite, Ingredient, RecipeIngredient,
+                        Recipie, ShoppingCart, Tag)
+from foodgram.constants import (ERROR_DUBLICATE_INGREDIENT,
+                                ERROR_DUBLICATE_TAG, ERROR_EMPTY_INGREDIENT,
+                                ERROR_EMPTY_TAG, ERROR_NO_INGREDIENT,
                                 ERROR_NO_TAG)
-
+from users.serializers import Base64ImageField, UserProfileSerializer
 
 User = get_user_model()
 

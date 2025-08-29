@@ -1,20 +1,19 @@
 from django.db.models import Sum
-from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
-from rest_framework import status
 
-from api.models import (Tag, Ingredient, Recipie,
-                        Favorite, ShoppingCart, RecipeIngredient)
-from api.serializers import (TagSerializer,
+from api.models import (Favorite, Ingredient, Recipie, RecipeIngredient,
+                        ShoppingCart, Tag)
+from api.serializers import (CreateRecipeSerializer, FavoriteRecipeSerializer,
                              IngredientSerializer, RecipeSerializer,
-                             FavoriteRecipeSerializer, CreateRecipeSerializer,)
+                             TagSerializer)
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
-                                ERROR_NO_RECIPE_FAVORITED,
-                                ERROR_ALREADY_IN_SHOPPINGCART,)
+                                ERROR_ALREADY_IN_SHOPPINGCART,
+                                ERROR_NO_RECIPE_FAVORITED)
 from foodgram.permissions import OwnerOrReadOnly
 
 

@@ -10,7 +10,7 @@ django-cors-headers==3.13.0
 djangorestframework==3.15.0
 djangorestframework_simplejwt==5.5.1
 djoser==2.3.1
-flake8==7.3.0
+flake8==6.0.0
 gunicorn==23.0.0
 idna==3.10
 iniconfig==2.1.0
@@ -21,9 +21,9 @@ pillow==11.2.1
 pluggy==0.13.1
 psycopg2-binary==2.9.10
 py==1.11.0
-pycodestyle==2.14.0
+pycodestyle==2.10.0
 pycparser==2.22
-pyflakes==3.4.0
+pyflakes==3.0.1
 PyJWT==2.10.1
 pytest==6.2.4
 pytest-django==4.4.0

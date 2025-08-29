@@ -5,13 +5,15 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from foodgram.constants import (MAX_TAG_LENGTH,
-                                MAX_INGRIDIENT_NAME_LENGTH,
-                                MAX_UNIT_NAME_LENGTH,
-                                MAX_RECIPE_NAME_LENGTH,
-                                MIN_RECIPE_LENGTH_NAME,
-                                MAX_LINK_LENGTH,
-                                MAX_HASH_LENGTH)
+from foodgram.constants import (
+    MAX_TAG_LENGTH,
+    MAX_INGRIDIENT_NAME_LENGTH,
+    MAX_UNIT_NAME_LENGTH,
+    MAX_RECIPE_NAME_LENGTH,
+    MIN_RECIPE_LENGTH_NAME,
+    MAX_LINK_LENGTH,
+    MAX_HASH_LENGTH
+)
 
 User = get_user_model()
 
