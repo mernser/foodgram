@@ -124,7 +124,7 @@ class Recipie(models.Model):
             original_url = self.short_link
             while Recipie.objects.filter(short_link=self.short_link,
                                          ).exists():
-                self.short_link = f'{original_url[:(MAX_HASH_LENGTH-1)]}{i}'
+                self.short_link = f'{original_url[:(MAX_HASH_LENGTH - 1)]}{i}'
                 i += 1
         super().save(*args, **kwargs)
 
