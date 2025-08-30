@@ -1,7 +1,7 @@
 from django_filters import rest_framework
 from rest_framework import filters
 
-from .models import Recipie
+from recipes.models import Recipie
 
 
 class RecipeFilter(rest_framework.FilterSet):

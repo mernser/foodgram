@@ -1,22 +1,133 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters import rest_framework
-
+from djoser.views import UserViewSet as BaseUserViewSet
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.models import (Favorite, Ingredient, Recipie, RecipeIngredient,
-                        ShoppingCart, Tag)
-from api.serializers import (CreateRecipeSerializer, FavoriteRecipeSerializer,
-                             IngredientSerializer, RecipeSerializer,
-                             TagSerializer)
-from api.filters import RecipeFilter, IngredientSearchFilter
+from api.filters import IngredientSearchFilter, RecipeFilter
+from api.pagination import SubscriptionsPageNumberPagination
+from api.permissions import IsOwner, OwnerOrReadOnly
+from api.serializers import (AvatarUpdateSerializer, CreateRecipeSerializer,
+                             FavoriteRecipeSerializer, IngredientSerializer,
+                             RecipeSerializer, TagSerializer,
+                             UserProfileListRecipesSerilizer)
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
                                 ERROR_ALREADY_IN_SHOPPINGCART,
-                                ERROR_NO_RECIPE_FAVORITED)
-from foodgram.permissions import OwnerOrReadOnly
+                                ERROR_ALREADY_SUBSCRIBED,
+                                ERROR_NO_RECIPE_FAVORITED,
+                                ERROR_SELF_SUBSCRIPTION)
+from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
+                            ShoppingCart, Tag)
+from users.models import Subscription
+
+User = get_user_model()
+
+
+class UserViewSet(BaseUserViewSet):
+    permission_classes = (IsAuthenticated, IsOwner,)
+
+    @action(detail=True,
+            methods=('delete',),
+            url_path='avatar')
+    def avatar_delete(self, request):
+        user_avatar = request.user.avatar
+        if user_avatar:
+            user_avatar.delete()
+            user_avatar = None
+            request.user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    @action(detail=True,
+            methods=('put',),
+            url_path='avatar')
+    def avatar_update(self, request):
+        serializer = AvatarUpdateSerializer(
+            request.user,
+            data=request.data,
+            partial=False,
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListSubscriptionViewSet(BaseUserViewSet):
+    pagination_class = SubscriptionsPageNumberPagination
+
+    @action(detail=False,
+            methods=('get',),
+            permission_classes=(IsAuthenticated,),
+            url_path='users/subscriptions')
+    def subscriptions(self, request):
+        subscriptions = User.objects.filter(
+            subscribed_to__follower=request.user
+        )
+        recipes_limit = request.query_params.get('recipes_limit', None)
+        page = self.paginate_queryset(subscriptions)
+        serializer = UserProfileListRecipesSerilizer(
+            page,
+            many=True,
+            context={'request': request,
+                     'recipes_limit': recipes_limit, }
+        )
+        return self.get_paginated_response(serializer.data)
+
+
+class SubscriptionViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    pagination_class = SubscriptionsPageNumberPagination
+
+    def create(self, request, *args, **kwargs):
+        recipes_limit = request.query_params.get('recipes_limit', None)
+        user_to_subscribe = get_object_or_404(User, pk=kwargs.get('pk'))
+        if Subscription.objects.filter(
+                follower=request.user,
+                subscribed_to=user_to_subscribe
+        ).exists():
+            return Response(
+                {'detail': ERROR_ALREADY_SUBSCRIBED},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if user_to_subscribe == request.user:
+            return Response(
+                {'detail': ERROR_SELF_SUBSCRIPTION},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        Subscription.objects.create(follower=request.user,
+                                    subscribed_to=user_to_subscribe)
+        serializer = UserProfileListRecipesSerilizer(
+            user_to_subscribe,
+            context={'request': request,
+                     'recipes_limit': recipes_limit}
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, *args, **kwargs):
+        user_to_unsubscribe = get_object_or_404(User, pk=kwargs.get('pk'))
+        if not user_to_unsubscribe:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        subscription = Subscription.objects.filter(
+            follower=request.user,
+            subscribed_to=user_to_unsubscribe
+        ).first()
+        if not subscription:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        subscription.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagViewSet(viewsets.ModelViewSet):
