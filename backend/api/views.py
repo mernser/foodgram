@@ -1,6 +1,7 @@
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django_filters import rest_framework
 
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view
@@ -11,6 +12,7 @@ from api.models import (Favorite, Ingredient, Recipie, RecipeIngredient,
 from api.serializers import (CreateRecipeSerializer, FavoriteRecipeSerializer,
                              IngredientSerializer, RecipeSerializer,
                              TagSerializer)
+from api.filters import RecipeFilter, IngredientSearchFilter
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
                                 ERROR_ALREADY_IN_SHOPPINGCART,
                                 ERROR_NO_RECIPE_FAVORITED)
@@ -31,13 +33,8 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        name_startswith = self.request.query_params.get('name')
-        if name_startswith:
-            return queryset.filter(name__istartswith=name_startswith)
-        return queryset
+    filter_backends = (IngredientSearchFilter,)
+    search_fields = ('name',)
 
 
 class ShoppingCartViewSet(viewsets.ModelViewSet):
@@ -84,33 +81,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,
                           OwnerOrReadOnly)
+    filter_backends = (rest_framework.DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ('create', 'update', 'partial_update'):
             return CreateRecipeSerializer
         return super().get_serializer_class()
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user = self.request.user
-        params = self.request.query_params
-        if user.is_authenticated:
-            is_favorited = params.get('is_favorited')
-            if is_favorited and is_favorited == '1':
-                queryset = queryset.filter(
-                    id__in=Favorite.objects.filter(user=user).values('recipe')
-                )
-            is_in_shopping_cart = params.get('is_in_shopping_cart')
-            if is_in_shopping_cart and is_in_shopping_cart == '1':
-                queryset = queryset.filter(
-                    id__in=ShoppingCart.objects
-                    .filter(user=user).values('recipe')
-                )
-        if author_id := params.get('author'):
-            queryset = queryset.filter(author=author_id)
-        if tags := params.getlist('tags'):
-            queryset = queryset.filter(tags__slug__in=tags).distinct()
-        return queryset
 
     @action(
         detail=True,

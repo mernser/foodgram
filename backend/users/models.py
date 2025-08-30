@@ -6,7 +6,7 @@ from foodgram.constants import (MAX_EMAIL_LENGTH,
 from users.validators import validate_username
 
 
-class MyUser(AbstractUser):
+class User(AbstractUser):
     avatar = models.ImageField(
         'Аватар',
         upload_to='users/avatars/',
@@ -43,6 +43,8 @@ class MyUser(AbstractUser):
         blank=False,
         null=False
     )
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
 
     class Meta:
         ordering = ('last_name',)
@@ -55,13 +57,13 @@ class MyUser(AbstractUser):
 
 class Subscription(models.Model):
     follower = models.ForeignKey(
-        MyUser,
+        User,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
         related_name='follower'
     )
     subscribed_to = models.ForeignKey(
-        MyUser,
+        User,
         on_delete=models.CASCADE,
         verbose_name='На кого подписан',
         related_name='subscribed_to'
@@ -71,7 +73,11 @@ class Subscription(models.Model):
         constraints = (
             models.UniqueConstraint(
                 fields=('follower', 'subscribed_to'),
-                name='unique_follower_subscribed_to'
+                name='unique_follower_subscribed_to',
+            ),
+            models.CheckConstraint(
+                check=~models.Q(follower=models.F('subscribed_to')),
+                name='self_subscription_unallowed'
             ),
         )
         verbose_name = 'Подписка'
