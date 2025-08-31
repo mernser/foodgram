@@ -1,4 +1,5 @@
 import base64
+from drf_extra_fields.fields import Base64ImageField
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile

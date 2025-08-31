@@ -1,22 +1,25 @@
 import os
 from pathlib import Path
 
-from api.permissions import UserDetailPermission
+from api.permissions import OwnerOrReadOnly
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', '')
+# SECRET_KEY = os.getenv('SECRET_KEY', '')
+SECRET_KEY = 'django-insecure-xhfk1gc)0h$((vs3*-b7h*48+5255py(sm^x^w8$2us=x8$#8v'
 
-DEBUG = False
+# DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = (os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')).split(',')
+# ALLOWED_HOSTS = (os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')).split(',')
+ALLOWED_HOSTS = ['localhost', '123.123.123.123', '127.0.0.1']
 
-CSRF_TRUSTED_ORIGINS = (os.getenv('CSRF_TRUSTED_ORIGINS', '')).split(',')
+# CSRF_TRUSTED_ORIGINS = (os.getenv('CSRF_TRUSTED_ORIGINS', '')).split(',')
 
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SAMESITE = 'None'
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SAMESITE = 'None'
+# CSRF_COOKIE_SAMESITE = 'None'
 
 INSTALLED_APPS = [
     'api.apps.ApiConfig',
@@ -31,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'drf_extra_fields',
 ]
 
 MIDDLEWARE = [
@@ -64,14 +68,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': f"django.db.backends.{os.getenv('DB', 'postgresql')}",
+#         'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
+#         'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
+#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+#         'HOST': os.getenv('DB_HOST', 'db'),
+#         'PORT': os.getenv('DB_PORT', 5432)
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': f"django.db.backends.{os.getenv('DB', 'postgresql')}",
-        'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
-        'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', 'db'),
-        'PORT': os.getenv('DB_PORT', 5432)
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -134,7 +145,7 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': False,
     'PERMISSIONS': {
-        'user': [UserDetailPermission],
+        'user': [OwnerOrReadOnly],
         'user_list': ['rest_framework.permissions.AllowAny'],
     }
 }

@@ -1,7 +1,7 @@
 from django_filters import rest_framework
 from rest_framework import filters
 
-from recipes.models import Recipie
+from recipes.models import Recipie, Tag
 
 
 class RecipeFilter(rest_framework.FilterSet):
@@ -11,11 +11,11 @@ class RecipeFilter(rest_framework.FilterSet):
     is_in_shopping_cart = rest_framework.BooleanFilter(
         method='filter_is_in_shopping_cart'
     )
-    author = rest_framework.NumberFilter(
-        field_name='author__id'
-    )
-    tags = rest_framework.AllValuesMultipleFilter(
-        field_name='tags__slug'
+    tags = rest_framework.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        to_field_name='slug',
+        queryset=Tag.objects.all(),
+        conjoined=False,
     )
 
     class Meta:

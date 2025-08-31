@@ -10,8 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.filters import IngredientSearchFilter, RecipeFilter
-from api.pagination import SubscriptionsPageNumberPagination
-from api.permissions import IsOwner, OwnerOrReadOnly
+from api.pagination import PageNumberPagination
+from api.permissions import OwnerOrReadOnly
 from api.serializers import (AvatarUpdateSerializer, CreateRecipeSerializer,
                              FavoriteRecipeSerializer, IngredientSerializer,
                              RecipeSerializer, TagSerializer,
@@ -29,7 +29,7 @@ User = get_user_model()
 
 
 class UserViewSet(BaseUserViewSet):
-    permission_classes = (IsAuthenticated, IsOwner,)
+    permission_classes = (IsAuthenticated, OwnerOrReadOnly,)
 
     @action(detail=True,
             methods=('delete',),
@@ -62,7 +62,7 @@ class UserViewSet(BaseUserViewSet):
 
 
 class ListSubscriptionViewSet(BaseUserViewSet):
-    pagination_class = SubscriptionsPageNumberPagination
+    pagination_class = PageNumberPagination
 
     @action(detail=False,
             methods=('get',),
@@ -85,7 +85,7 @@ class ListSubscriptionViewSet(BaseUserViewSet):
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
-    pagination_class = SubscriptionsPageNumberPagination
+    pagination_class = PageNumberPagination
 
     def create(self, request, *args, **kwargs):
         recipes_limit = request.query_params.get('recipes_limit', None)
