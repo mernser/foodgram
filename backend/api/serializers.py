@@ -205,12 +205,8 @@ class CreateRecipeSerializer(RecipeSerializer):
             raise serializers.ValidationError(ERROR_DUBLICATE_TAG)
         return value
 
-    def create(self, validated_data):
-        validated_data['author'] = self.context['request'].user
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        recipe = Recipie.objects.create(**validated_data)
-        recipe.tags.set(tags)
+    @staticmethod
+    def create_recipe_ingredients(recipe, ingredients):
         recipe_ingredients = [
             RecipeIngredient(
                 recipe=recipe,
@@ -220,6 +216,14 @@ class CreateRecipeSerializer(RecipeSerializer):
             for ingredient in ingredients
         ]
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
+
+    def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipie.objects.create(**validated_data)
+        recipe.tags.set(tags)
+        self.create_recipe_ingredients(recipe, ingredients)
         return recipe
 
     def update(self, instance, validated_data):
@@ -230,14 +234,7 @@ class CreateRecipeSerializer(RecipeSerializer):
         instance.save()
         instance.tags.set(tags)
         instance.recipe_ingredients.all().delete()
-        recipe_ingredients = []
-        for ingredient in ingredients:
-            recipe_ingredients.append(RecipeIngredient(
-                recipe=instance,
-                ingredient=ingredient['id'],
-                amount=ingredient['amount']
-            ))
-        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+        self.create_recipe_ingredients(instance, ingredients)
         return instance
 
     def to_representation(self, instance):
