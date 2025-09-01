@@ -2,8 +2,7 @@ from django.urls import include, path
 from rest_framework import routers
 
 from api.views import (IngredientViewSet, RecipeViewSet, ShoppingCartViewSet,
-                       SubscriptionViewSet, TagViewSet, UserViewSet,
-                       get_recipe_short_link)
+                       TagViewSet, UserViewSet, get_recipe_short_link)
 
 router = routers.SimpleRouter()
 router.register('tags', TagViewSet, basename='tags')
@@ -19,8 +18,8 @@ urlpatterns = [
          UserViewSet.as_view({'put': 'avatar_update',
                                      'delete': 'avatar_delete'})),
     path('users/<int:pk>/subscribe/',
-         SubscriptionViewSet.as_view({'post': 'create',
-                                      'delete': 'delete'})),
+         UserViewSet.as_view({'post': 'subscribe',
+                              'delete': 'unsubscribe'})),  # Изменено здесь
     path('recipes/<int:pk>/shopping_cart/',
          ShoppingCartViewSet.as_view({'post': 'create',
                                       'delete': 'delete'})),

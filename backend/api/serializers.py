@@ -1,14 +1,18 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Count
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from foodgram.constants import (ERROR_DUBLICATE_INGREDIENT,
+from foodgram.constants import (ERROR_ALREADY_SUBSCRIBED,
+                                ERROR_DUBLICATE_INGREDIENT,
                                 ERROR_DUBLICATE_TAG, ERROR_EMPTY_INGREDIENT,
                                 ERROR_EMPTY_TAG, ERROR_NO_IMAGE,
                                 ERROR_NO_INGREDIENT, ERROR_NO_TAG,
-                                MAX_INGREDIENT_AMOUNT, MIN_INGREDIENT_AMOUNT)
+                                ERROR_SELF_SUBSCRIPTION, MAX_INGREDIENT_AMOUNT,
+                                MIN_INGREDIENT_AMOUNT)
 from recipes.models import Ingredient, RecipeIngredient, Recipie, Tag
+from users.models import Subscription
 
 User = get_user_model()
 
@@ -264,3 +268,34 @@ class ShortLinkSerializer(serializers.ModelSerializer):
         if obj.short_link:
             return self.context['request'].build_absolute_uri(obj.short_link)
         return None
+
+
+class SubscriptionCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ('subscribed_to',)
+
+    def to_representation(self, instance):
+        subscribed_user = User.objects.filter(
+            id=instance.subscribed_to.id
+        ).annotate(recipes_count=Count('recipes')).first()
+
+        return UserProfileListRecipesSerilizer(
+            subscribed_user,
+            context=self.context
+        ).data
+
+    def validate(self, data):
+        subscribed_to = data['subscribed_to']
+        follower = self.context['request'].user
+
+        if Subscription.objects.filter(
+            follower=follower,
+            subscribed_to=subscribed_to
+        ).exists():
+            raise serializers.ValidationError(ERROR_ALREADY_SUBSCRIBED)
+        
+        if follower == subscribed_to:
+            raise serializers.ValidationError(ERROR_SELF_SUBSCRIPTION)
+        
+        return data
