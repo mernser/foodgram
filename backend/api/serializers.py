@@ -8,8 +8,7 @@ from foodgram.constants import (ERROR_DUBLICATE_INGREDIENT,
                                 ERROR_EMPTY_TAG, ERROR_NO_IMAGE,
                                 ERROR_NO_INGREDIENT, ERROR_NO_TAG,
                                 MAX_INGREDIENT_AMOUNT, MIN_INGREDIENT_AMOUNT)
-from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
-                            ShoppingCart, Tag)
+from recipes.models import Ingredient, RecipeIngredient, Recipie, Tag
 
 User = get_user_model()
 
@@ -202,8 +201,7 @@ class CreateRecipeSerializer(RecipeSerializer):
     def validate_tags(self, value):
         if not value:
             raise serializers.ValidationError(ERROR_EMPTY_TAG)
-        tags_ids = [item.id for item in value]
-        if len(tags_ids) != len(set(tags_ids)):
+        if len(value) != len(set(value)):
             raise serializers.ValidationError(ERROR_DUBLICATE_TAG)
         return value
 
