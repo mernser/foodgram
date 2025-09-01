@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
 from django_filters import rest_framework
 from djoser.views import UserViewSet as BaseUserViewSet
 from rest_framework import permissions, status, viewsets
@@ -34,7 +33,7 @@ class UserViewSet(BaseUserViewSet):
 
     @action(detail=True,
             methods=('delete',),
-            url_path='avatar',)
+            url_path='avatar')
     def avatar_delete(self, request):
         request.user.avatar.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -50,6 +49,7 @@ class UserViewSet(BaseUserViewSet):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
