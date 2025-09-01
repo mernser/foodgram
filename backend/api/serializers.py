@@ -9,7 +9,6 @@ from foodgram.constants import (ERROR_DUBLICATE_INGREDIENT,
                                 ERROR_NO_INGREDIENT, ERROR_NO_TAG)
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
                             ShoppingCart, Tag)
-from users.models import Subscription
 
 User = get_user_model()
 
@@ -57,12 +56,15 @@ class UserProfileListRecipesSerilizer(UserProfileSerializer):
     recipes_count = serializers.SerializerMethodField()
 
     class Meta(UserProfileSerializer.Meta):
-        fields = ('email', 'id', 'username', 'first_name',
-                  'last_name', 'is_subscribed', 'avatar',
-                  'recipes', 'recipes_count',)
+        # fields = ('email', 'id', 'username', 'first_name',
+        #           'last_name', 'is_subscribed', 'avatar',
+        #           'recipes', 'recipes_count',)
+
+        fields = UserProfileSerializer.Meta.fields + (
+            'recipes', 'recipes_count',
+        )
 
     def get_recipes(self, obj):
-        from api.serializers import FavoriteRecipeSerializer
         recipes_limit = self.context.get('recipes_limit')
         recipes = obj.recipes.all()
         if recipes_limit:
