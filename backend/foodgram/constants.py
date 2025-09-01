@@ -19,3 +19,5 @@ ERROR_EMPTY_TAG = 'Ошибка создания рецепта: список т
 ERROR_NO_INGREDIENT = 'Ошибка обновления рецепта: ингредиент пустой'
 ERROR_NO_TAG = 'Ошибка обновления рецепта: теги пустые'
 ERROR_NO_IMAGE = 'Поле image не может быть пустым'
+MAX_INGREDIENT_AMOUNT = 1000
+MIN_INGREDIENT_AMOUNT = 1

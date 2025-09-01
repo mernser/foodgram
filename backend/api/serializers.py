@@ -6,7 +6,8 @@ from rest_framework import serializers
 from foodgram.constants import (ERROR_DUBLICATE_INGREDIENT,
                                 ERROR_DUBLICATE_TAG, ERROR_EMPTY_INGREDIENT,
                                 ERROR_EMPTY_TAG, ERROR_NO_IMAGE,
-                                ERROR_NO_INGREDIENT, ERROR_NO_TAG)
+                                ERROR_NO_INGREDIENT, ERROR_NO_TAG,
+                                MAX_INGREDIENT_AMOUNT, MIN_INGREDIENT_AMOUNT)
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
                             ShoppingCart, Tag)
 
@@ -56,10 +57,6 @@ class UserProfileListRecipesSerilizer(UserProfileSerializer):
     recipes_count = serializers.SerializerMethodField()
 
     class Meta(UserProfileSerializer.Meta):
-        # fields = ('email', 'id', 'username', 'first_name',
-        #           'last_name', 'is_subscribed', 'avatar',
-        #           'recipes', 'recipes_count',)
-
         fields = UserProfileSerializer.Meta.fields + (
             'recipes', 'recipes_count',
         )
@@ -125,7 +122,10 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
-    amount = serializers.IntegerField(min_value=1)
+    amount = serializers.IntegerField(
+        min_value=MIN_INGREDIENT_AMOUNT,
+        max_value=MAX_INGREDIENT_AMOUNT
+    )
 
     class Meta:
         model = RecipeIngredient
