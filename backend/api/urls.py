@@ -19,7 +19,7 @@ urlpatterns = [
                                      'delete': 'avatar_delete'})),
     path('users/<int:pk>/subscribe/',
          UserViewSet.as_view({'post': 'subscribe',
-                              'delete': 'unsubscribe'})),  # Изменено здесь
+                              'delete': 'unsubscribe'})),
     path('recipes/<int:pk>/shopping_cart/',
          ShoppingCartViewSet.as_view({'post': 'create',
                                       'delete': 'delete'})),

@@ -288,14 +288,11 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         subscribed_to = data['subscribed_to']
         follower = self.context['request'].user
-
         if Subscription.objects.filter(
             follower=follower,
             subscribed_to=subscribed_to
         ).exists():
             raise serializers.ValidationError(ERROR_ALREADY_SUBSCRIBED)
-        
         if follower == subscribed_to:
             raise serializers.ValidationError(ERROR_SELF_SUBSCRIPTION)
-        
         return data

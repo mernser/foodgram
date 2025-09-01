@@ -18,9 +18,7 @@ from api.serializers import (AvatarUpdateSerializer, CreateRecipeSerializer,
                              TagSerializer, UserProfileListRecipesSerilizer)
 from foodgram.constants import (ERROR_ALREADY_FAVORITED,
                                 ERROR_ALREADY_IN_SHOPPINGCART,
-                                ERROR_ALREADY_SUBSCRIBED,
-                                ERROR_NO_RECIPE_FAVORITED,
-                                ERROR_SELF_SUBSCRIPTION)
+                                ERROR_NO_RECIPE_FAVORITED)
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
                             ShoppingCart, Tag)
 from users.models import Subscription
@@ -69,7 +67,9 @@ class UserViewSet(BaseUserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True,
+            methods=('post',),
+            permission_classes=(IsAuthenticated,))
     def subscribe(self, request, pk=None):
         user_to_subscribe = get_object_or_404(User, pk=pk)
         serializer = SubscriptionCreateSerializer(
