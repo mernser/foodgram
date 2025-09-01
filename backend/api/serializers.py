@@ -1,15 +1,12 @@
-import base64
-from drf_extra_fields.fields import Base64ImageField
-
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from foodgram.constants import (ERROR_DUBLICATE_INGREDIENT,
                                 ERROR_DUBLICATE_TAG, ERROR_EMPTY_INGREDIENT,
-                                ERROR_EMPTY_TAG, ERROR_NO_INGREDIENT,
-                                ERROR_NO_TAG)
+                                ERROR_EMPTY_TAG, ERROR_NO_IMAGE,
+                                ERROR_NO_INGREDIENT, ERROR_NO_TAG)
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
                             ShoppingCart, Tag)
 from users.models import Subscription
@@ -17,14 +14,10 @@ from users.models import Subscription
 User = get_user_model()
 
 
-class Base64ImageField(serializers.ImageField):
+class ImageField(Base64ImageField):
     def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
+        if data == "":
+            raise serializers.ValidationError(ERROR_NO_IMAGE)
         return super().to_internal_value(data)
 
 
@@ -86,7 +79,7 @@ class UserProfileListRecipesSerilizer(UserProfileSerializer):
 
 
 class AvatarUpdateSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(required=True)
+    avatar = ImageField(required=True)
 
     class Meta:
         model = User
@@ -138,7 +131,7 @@ class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField(required=True)
+    image = ImageField(required=True)
     author = UserProfileSerializer(read_only=True)
     tags = TagSerializer(many=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
