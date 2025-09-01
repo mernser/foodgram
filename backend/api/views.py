@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django_filters import rest_framework
 from djoser.views import UserViewSet as BaseUserViewSet
 from rest_framework import permissions, status, viewsets
@@ -33,17 +34,10 @@ class UserViewSet(BaseUserViewSet):
 
     @action(detail=True,
             methods=('delete',),
-            url_path='avatar')
+            url_path='avatar',)
     def avatar_delete(self, request):
-        user_avatar = request.user.avatar
-        if user_avatar:
-            user_avatar.delete()
-            user_avatar = None
-            request.user.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            status=status.HTTP_404_NOT_FOUND
-        )
+        request.user.avatar.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True,
             methods=('put',),
@@ -55,10 +49,8 @@ class UserViewSet(BaseUserViewSet):
             partial=False,
             context={'request': request}
         )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ListSubscriptionViewSet(BaseUserViewSet):

@@ -229,8 +229,7 @@ class CreateRecipeSerializer(RecipeSerializer):
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients', None)
         tags = validated_data.pop('tags', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        instance = super().update(instance, validated_data)
         instance.save()
         instance.tags.set(tags)
         instance.recipe_ingredients.all().delete()
