@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Sum
+from django.db.models import Count, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters import rest_framework
@@ -60,14 +60,12 @@ class UserViewSet(BaseUserViewSet):
     def subscriptions(self, request):
         subscriptions = User.objects.filter(
             subscribed_to__follower=request.user
-        )
-        recipes_limit = request.query_params.get('recipes_limit', None)
+        ).annotate(recipes_count=Count('recipes'))
         page = self.paginate_queryset(subscriptions)
         serializer = UserProfileListRecipesSerilizer(
             page,
             many=True,
-            context={'request': request,
-                     'recipes_limit': recipes_limit, }
+            context={'request': request}
         )
         return self.get_paginated_response(serializer.data)
 
@@ -94,6 +92,10 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             )
         Subscription.objects.create(follower=request.user,
                                     subscribed_to=user_to_subscribe)
+        
+        user_to_subscribe = User.objects.filter(pk=user_to_subscribe.pk).annotate(
+            recipes_count=Count('recipes')
+        ).first()
         serializer = UserProfileListRecipesSerilizer(
             user_to_subscribe,
             context={'request': request,

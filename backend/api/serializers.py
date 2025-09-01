@@ -53,7 +53,7 @@ class UserProfileListRecipesSerilizer(UserProfileSerializer):
     '''
 
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True)
 
     class Meta(UserProfileSerializer.Meta):
         fields = UserProfileSerializer.Meta.fields + (
@@ -61,7 +61,11 @@ class UserProfileListRecipesSerilizer(UserProfileSerializer):
         )
 
     def get_recipes(self, obj):
-        recipes_limit = self.context.get('recipes_limit')
+        recipes_limit = (
+            self.context
+            .get('request')
+            .query_params.get('recipes_limit')
+        )
         recipes = obj.recipes.all()
         if recipes_limit:
             try:
@@ -71,9 +75,6 @@ class UserProfileListRecipesSerilizer(UserProfileSerializer):
         return FavoriteRecipeSerializer(recipes,
                                         many=True,
                                         context=self.context).data
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
 
 
 class AvatarUpdateSerializer(serializers.ModelSerializer):
