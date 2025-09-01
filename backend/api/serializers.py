@@ -40,12 +40,12 @@ class UserProfileSerializer(UserSerializer):
         fields = UserSerializer.Meta.fields + ('is_subscribed', 'avatar')
 
     def get_is_subscribed(self, obj):
-        if not self.context.get('request').user.is_authenticated:
-            return False
-        return Subscription.objects.filter(
-            follower=self.context.get('request').user,
-            subscribed_to=obj
-        ).exists()
+        request = self.context.get('request')
+        return (
+            request
+            and request.user.is_authenticated
+            and request.user.follower.filter(subscribed_to=obj).exists()
+        )
 
 
 class UserProfileListRecipesSerilizer(UserProfileSerializer):
