@@ -30,14 +30,14 @@ class UserSignUpSerializer(UserCreateSerializer):
 
 class UserProfileSerializer(UserSerializer):
     '''
-    Выдача обычного объекта модели юзер
+    Выдача обычного объекта модели юзер.
     '''
+
     is_subscribed = serializers.SerializerMethodField()
 
-    class Meta:
+    class Meta(UserSerializer.Meta):
         model = User
-        fields = ('email', 'id', 'username', 'first_name',
-                  'last_name', 'is_subscribed', 'avatar')
+        fields = UserSerializer.Meta.fields + ('is_subscribed', 'avatar')
 
     def get_is_subscribed(self, obj):
         if not self.context.get('request').user.is_authenticated:
@@ -50,9 +50,9 @@ class UserProfileSerializer(UserSerializer):
 
 class UserProfileListRecipesSerilizer(UserProfileSerializer):
     '''
-    Выдача обычного объекта моедли юзер с ограничением на количестве рецептов
-    Сделать наследование
+    Выдача обычного объекта моедли юзер с ограничением на количестве рецептов.
     '''
+
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
