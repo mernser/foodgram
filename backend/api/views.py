@@ -30,6 +30,7 @@ User = get_user_model()
 
 class UserViewSet(BaseUserViewSet):
     permission_classes = (IsAuthenticated, OwnerOrReadOnly,)
+    pagination_class = PageNumberPagination
 
     @action(detail=True,
             methods=('delete',),
@@ -52,14 +53,10 @@ class UserViewSet(BaseUserViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-class ListSubscriptionViewSet(BaseUserViewSet):
-    pagination_class = PageNumberPagination
-
     @action(detail=False,
             methods=('get',),
             permission_classes=(IsAuthenticated,),
-            url_path='users/subscriptions')
+            url_path='subscriptions')
     def subscriptions(self, request):
         subscriptions = User.objects.filter(
             subscribed_to__follower=request.user
