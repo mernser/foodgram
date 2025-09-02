@@ -3,7 +3,8 @@ from io import BytesIO
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
 from django.http import FileResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django_filters import rest_framework
 from djoser.views import UserViewSet as BaseUserViewSet
 from rest_framework import permissions, status, viewsets
@@ -217,14 +218,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return response
 
 
-@api_view(['GET'])
-def short_link_redirect(request, short_link):
-    recipe = get_object_or_404(Recipie, short_link=short_link)
-    return redirect(request.build_absolute_uri(f'/recipes/{recipe.pk}'))
-
-
-@api_view(['GET'])
+@api_view(('GET',))
 def get_recipe_short_link(request, pk):
     recipe = get_object_or_404(Recipie, id=pk)
-    short_link_url = request.build_absolute_uri(f'/s/{recipe.short_link}')
+    short_link_path = reverse('short_link_redirect',
+                              kwargs={'short_link': recipe.short_link})
+    short_link_url = request.build_absolute_uri(short_link_path)
     return Response({'short-link': short_link_url})
