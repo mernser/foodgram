@@ -21,7 +21,7 @@ class UserAdmin(BaseUserAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
             recipes_count=Count('recipes', distinct=True),
-            subscribers_count=Count('subscribed_to', distinct=True)
+            subscribers_count=Count('authors', distinct=True)
         )
 
     @admin.display(description='Кол-во рецептов')
@@ -35,6 +35,6 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('follower', 'subscribed_to')
-    search_fields = ('follower__username', 'subscribed_to__username')
-    list_filter = ('follower', 'subscribed_to')
+    list_display = ('user', 'author')
+    search_fields = ('user__username', 'author__username')
+    list_filter = ('user', 'author')

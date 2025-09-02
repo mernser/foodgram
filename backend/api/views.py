@@ -56,7 +56,7 @@ class UserViewSet(BaseUserViewSet):
             url_path='subscriptions')
     def subscriptions(self, request):
         subscriptions = User.objects.filter(
-            subscribed_to__follower=request.user
+            authors__user=request.user
         ).annotate(recipes_count=Count('recipes'))
         page = self.paginate_queryset(subscriptions)
         serializer = UserProfileListRecipesSerilizer(
@@ -72,19 +72,19 @@ class UserViewSet(BaseUserViewSet):
     def subscribe(self, request, pk=None):
         user_to_subscribe = get_object_or_404(User, pk=pk)
         serializer = SubscriptionCreateSerializer(
-            data={'subscribed_to': user_to_subscribe.id},
+            data={'author': user_to_subscribe.id},
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(follower=request.user)
+        serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, pk=None):
         user_to_unsubscribe = get_object_or_404(User, pk=pk)
         deleted_count, _ = Subscription.objects.filter(
-            follower=request.user,
-            subscribed_to=user_to_unsubscribe
+            user=request.user,
+            author=user_to_unsubscribe
         ).delete()
 
         if deleted_count > 0:

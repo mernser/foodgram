@@ -35,9 +35,6 @@ class UserSignUpSerializer(UserCreateSerializer):
 
 
 class UserProfileSerializer(UserSerializer):
-    '''
-    Выдача обычного объекта модели юзер.
-    '''
 
     is_subscribed = serializers.SerializerMethodField()
 
@@ -50,15 +47,11 @@ class UserProfileSerializer(UserSerializer):
         return (
             request
             and request.user.is_authenticated
-            and request.user.follower.filter(subscribed_to=obj).exists()
+            and request.user.subscribers.filter(author=obj).exists()
         )
 
 
 class UserProfileListRecipesSerilizer(UserProfileSerializer):
-    '''
-    Выдача обычного объекта моедли юзер с ограничением на количестве рецептов.
-    '''
-
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.IntegerField(read_only=True)
 
@@ -276,11 +269,11 @@ class ShortLinkSerializer(serializers.ModelSerializer):
 class SubscriptionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
-        fields = ('subscribed_to',)
+        fields = ('author',)
 
     def to_representation(self, instance):
         subscribed_user = User.objects.filter(
-            id=instance.subscribed_to.id
+            id=instance.author.id
         ).annotate(recipes_count=Count('recipes')).first()
 
         return UserProfileListRecipesSerilizer(
@@ -289,14 +282,14 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
         ).data
 
     def validate(self, data):
-        subscribed_to = data['subscribed_to']
-        follower = self.context['request'].user
+        author = data['author']
+        user = self.context['request'].user
         if Subscription.objects.filter(
-            follower=follower,
-            subscribed_to=subscribed_to
+            user=user,
+            author=author
         ).exists():
             raise serializers.ValidationError(ERROR_ALREADY_SUBSCRIBED)
-        if follower == subscribed_to:
+        if user == author:
             raise serializers.ValidationError(ERROR_SELF_SUBSCRIPTION)
         return data
 
