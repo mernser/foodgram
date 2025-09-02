@@ -1,6 +1,8 @@
+from io import BytesIO
+
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
-from django.http import HttpResponse
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters import rest_framework
 from djoser.views import UserViewSet as BaseUserViewSet
@@ -13,13 +15,10 @@ from api.filters import IngredientSearchFilter, RecipeFilter
 from api.pagination import PageNumberPagination
 from api.permissions import OwnerOrReadOnly
 from api.serializers import (AvatarUpdateSerializer, CreateRecipeSerializer,
-                             FavoriteRecipeSerializer, IngredientSerializer,
-                             RecipeSerializer, SubscriptionCreateSerializer,
-                             TagSerializer, UserProfileListRecipesSerilizer,
-                             FavoriteCreateSerializer, ShoppingCartCreateSerializer)
-from foodgram.constants import (ERROR_ALREADY_FAVORITED,
-                                ERROR_ALREADY_IN_SHOPPINGCART,
-                                ERROR_NO_RECIPE_FAVORITED)
+                             FavoriteCreateSerializer, IngredientSerializer,
+                             RecipeSerializer, ShoppingCartCreateSerializer,
+                             SubscriptionCreateSerializer, TagSerializer,
+                             UserProfileListRecipesSerilizer)
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
                             ShoppingCart, Tag)
 from users.models import Subscription
@@ -113,12 +112,26 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipie.objects.all()
+    queryset = Recipie.objects.select_related('author').prefetch_related(
+        'tags',
+        'recipe_ingredients__ingredient'
+    ).all()
     serializer_class = RecipeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,
                           OwnerOrReadOnly)
     filter_backends = (rest_framework.DjangoFilterBackend,)
     filterset_class = RecipeFilter
+
+    @staticmethod
+    def generate_shopping_list_content(items):
+        content = ''
+        for item in items:
+            content += (
+                f'{item["ingredient__name"]} '
+                f'({item["ingredient__measurement_unit"]}) - '
+                f'{item["total_amount"]}\n'
+            )
+        return content
 
     def get_serializer_class(self):
         if self.action in ('create', 'update', 'partial_update'):
@@ -189,14 +202,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'ingredient__name',
             'ingredient__measurement_unit',
         ).annotate(total_amount=Sum('amount'))
-        content = ''
-        for item in items:
-            content += (
-                f"{item['ingredient__name']} "
-                f"({item['ingredient__measurement_unit']}) - "
-                f"{item['total_amount']}\n"
-            )
-        response = HttpResponse(content, content_type='text/plain')
+        file_buffer = BytesIO(
+            self.generate_shopping_list_content(items).encode('utf-8')
+        )
+        response = FileResponse(
+            file_buffer,
+            content_type='text/plain',
+            as_attachment=True,
+            filename='ingredients_totals.txt'
+        )
         response['Content-Disposition'] = (
             'attachment; filename="ingredients_totals.txt"'
         )
