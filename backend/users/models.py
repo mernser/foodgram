@@ -6,10 +6,12 @@ from users.validators import validate_username
 
 
 class User(AbstractUser):
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
+
     avatar = models.ImageField(
         'Аватар',
         upload_to='users/avatars/',
-        null=True,
         default=None,
         help_text='Фотография профиля пользователя',
     )
@@ -17,33 +19,23 @@ class User(AbstractUser):
         'Email',
         max_length=MAX_EMAIL_LENGTH,
         unique=True,
-        blank=False,
-        null=False,
         help_text='Адрес электронной почты',
     )
     username = models.CharField(
         'Username',
         max_length=MAX_NAME_FIELDS_LENTGH,
         unique=True,
-        blank=False,
-        null=False,
         help_text='Уникальный юзернейм',
         validators=(validate_username, )
     )
     first_name = models.CharField(
         'Имя',
         max_length=MAX_NAME_FIELDS_LENTGH,
-        blank=False,
-        null=False,
     )
     last_name = models.CharField(
         'Фамилия',
         max_length=MAX_NAME_FIELDS_LENTGH,
-        blank=False,
-        null=False
     )
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
 
     class Meta:
         ordering = ('last_name',)

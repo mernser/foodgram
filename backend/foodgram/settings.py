@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'djoser',
     'django_filters',
     'drf_extra_fields',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
