@@ -1,3 +1,4 @@
+[![Main Foodgram workflow](https://github.com/mernser/foodgram/actions/workflows/main.yml/badge.svg)](https://github.com/mernser/foodgram/actions/workflows/main.yml)
 # Фудграм
 
 Социальная сеть для публикации кулинарных рецептов.
