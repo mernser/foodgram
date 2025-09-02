@@ -11,7 +11,8 @@ class Command(BaseCommand):
         parser.add_argument(
             'file_path',
             type=str,
-            default='ingredients.csv'
+            nargs='?',
+            default='./data/ingredients.csv'
         )
 
     def handle(self, *args, **options):
@@ -21,10 +22,18 @@ class Command(BaseCommand):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 reader = csv.reader(f)
+                ingredients_to_create = []
                 for name, measurement_unit in reader:
-                    Ingredient.objects.update_or_create(
-                        name=name.strip(),
-                        measurement_unit=measurement_unit.strip()
+                    ingredients_to_create.append(
+                        Ingredient(
+                            name=name.strip(),
+                            measurement_unit=measurement_unit.strip())
                     )
+                Ingredient.objects.bulk_create(
+                    ingredients_to_create,
+                    ignore_conflicts=True
+                )
         except Exception as e:
-            print(f'Ошибка при чтении/записи: {e}')
+            self.stderr.write(
+                self.style.ERROR(f'Ошибка при чтении/записи: {e}')
+            )
