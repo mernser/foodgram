@@ -167,20 +167,30 @@ class RecipeIngredient(models.Model):
         )
 
 
-class Favorite(models.Model):
-    recipe = models.ForeignKey(
-        Recipie,
-        on_delete=models.CASCADE,
-        verbose_name='Рецепт в избранном',
-        related_name='favorites_by'
-    )
+class BaseUserRecipeRelation(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='У кого в избранном',
-        related_name='favorite_recipes'
+        verbose_name='Пользователь',
+    )
+    recipe = models.ForeignKey(
+        Recipie,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
     )
 
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return (
+            f'{self.user.username} — '
+            f'{self._meta.verbose_name}: '
+            f'{self.recipe.name[:MAX_STR_FIELD]}'
+        )
+
+
+class Favorite(BaseUserRecipeRelation):
     class Meta:
         verbose_name = 'Рецепт в избранном'
         verbose_name_plural = 'Рецепты в избранных'
@@ -191,37 +201,14 @@ class Favorite(models.Model):
             ),
         )
 
-    def __str__(self):
-        return (
-            f'{self.user.username[:MAX_STR_FIELD]} - '
-            f'{self.recipe.name[:MAX_STR_FIELD]}'
-        )
 
-
-class ShoppingCart(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Владелец корзины',
-        related_name='shopping_list')
-    recipe = models.ForeignKey(
-        Recipie,
-        on_delete=models.CASCADE,
-        verbose_name='Рецепт в корзине',
-        related_name='cart_owners')
-
+class ShoppingCart(BaseUserRecipeRelation):
     class Meta:
         verbose_name = 'Рецепт в корзине'
         verbose_name_plural = 'Рецепты в корзинах'
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
-                name='unique_owner_recipe_in_cart'
+                name='unique_user_recipe_in_cart'
             ),
-        )
-
-    def __str__(self):
-        return (
-            f'{self.recipe.name[:MAX_STR_FIELD]} '
-            f'в корзине у {self.user.username}'
         )

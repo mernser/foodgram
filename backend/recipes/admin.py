@@ -24,7 +24,7 @@ class RecipieAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
-            favorites_count=Count('favorites_by')
+            favorites_count=Count('favorite')
         )
 
     @admin.display(description='Кол-во в избранном')

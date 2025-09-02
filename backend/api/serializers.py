@@ -164,7 +164,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return (
             request
             and request.user.is_authenticated
-            and request.user.shopping_list.filter(recipe=obj).exists()
+            and request.user.shoppingcart_set.filter(recipe=obj).exists()
         )
 
     def get_is_favorited(self, obj):
@@ -172,7 +172,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return (
             request
             and request.user.is_authenticated
-            and request.user.favorite_recipes.filter(recipe=obj).exists()
+            and request.user.favorite_set.filter(recipe=obj).exists()
         )
 
 
