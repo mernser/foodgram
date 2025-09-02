@@ -93,7 +93,7 @@ class UserViewSet(BaseUserViewSet):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get',)
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
@@ -101,7 +101,7 @@ class TagViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get',)
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
