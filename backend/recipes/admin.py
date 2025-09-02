@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count
+from django.utils.safestring import mark_safe
 
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
                             ShoppingCart, Tag)
@@ -13,21 +14,39 @@ class RecipeIngredientInline(admin.TabularInline):
 
 @admin.register(Recipie)
 class RecipieAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author')
+    list_display = ('name', 'author', 'get_ingredients', 'get_tags')
     search_fields = ('name', 'username')
     list_filter = ('tags',)
     inlines = (RecipeIngredientInline,)
     ordering = ('-pub_date',)
-    readonly_fields = ('get_favorites_count', 'short_link', 'pub_date')
+    readonly_fields = ('get_favorites_count', 'short_link',
+                       'pub_date', 'get_image')
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
             favorites_count=Count('favorites_by')
         )
 
+    @admin.display(description='Кол-во в избранном')
     def get_favorites_count(self, obj):
         return obj.favorites_count
-    get_favorites_count.short_description = 'Количество добавлений в избранное'
+
+    @admin.display(description='Изображение рецепта')
+    def get_image(self, obj):
+        return mark_safe(f'<img src={obj.image.url} width="80" height="60">')
+
+    @admin.display(description='Ингредиенты')
+    def get_ingredients(self, obj):
+        ingredients = (
+            f'{ingredient.ingredient.name}'
+            for ingredient in obj.recipe_ingredients.all()
+        )
+        return ', '.join(ingredients) if ingredients else '-'
+
+    @admin.display(description='Теги')
+    def get_tags(self, obj):
+        tags = (tag.name for tag in getattr(obj, 'tags').all())
+        return ', '.join(tags) if tags else '-'
 
 
 @admin.register(Tag)
