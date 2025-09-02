@@ -4,14 +4,17 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from foodgram.constants import (ERROR_ALREADY_SUBSCRIBED,
+from foodgram.constants import (ERROR_ALREADY_FAVORITED,
+                                ERROR_ALREADY_IN_SHOPPINGCART,
+                                ERROR_ALREADY_SUBSCRIBED,
                                 ERROR_DUBLICATE_INGREDIENT,
                                 ERROR_DUBLICATE_TAG, ERROR_EMPTY_INGREDIENT,
                                 ERROR_EMPTY_TAG, ERROR_NO_IMAGE,
                                 ERROR_NO_INGREDIENT, ERROR_NO_TAG,
                                 ERROR_SELF_SUBSCRIPTION, MAX_INGREDIENT_AMOUNT,
                                 MIN_INGREDIENT_AMOUNT)
-from recipes.models import Ingredient, RecipeIngredient, Recipie, Tag
+from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
+                            ShoppingCart, Tag)
 from users.models import Subscription
 
 User = get_user_model()
@@ -296,3 +299,39 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
         if follower == subscribed_to:
             raise serializers.ValidationError(ERROR_SELF_SUBSCRIPTION)
         return data
+
+
+class BaseCreateRelationSerializer(serializers.ModelSerializer):
+    error_message = None
+
+    class Meta:
+        fields = ('user', 'recipe')
+
+    def validate(self, data):
+        if self.Meta.model.objects.filter(
+            user=data.get('user'),
+            recipe=data.get('recipe')
+        ).exists():
+            raise serializers.ValidationError(self.error_message)
+        return data
+
+    def to_representation(self, instance):
+        return FavoriteRecipeSerializer(
+            instance.recipe, context=self.context
+        ).data
+
+
+class FavoriteCreateSerializer(BaseCreateRelationSerializer):
+    error_message = ERROR_ALREADY_FAVORITED
+    representation_serializer = FavoriteRecipeSerializer
+
+    class Meta(BaseCreateRelationSerializer.Meta):
+        model = Favorite
+
+
+class ShoppingCartCreateSerializer(BaseCreateRelationSerializer):
+    error_message = ERROR_ALREADY_IN_SHOPPINGCART
+    representation_serializer = FavoriteRecipeSerializer
+
+    class Meta(BaseCreateRelationSerializer.Meta):
+        model = ShoppingCart
