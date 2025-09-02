@@ -1,14 +1,14 @@
-import hashlib
-
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils import timezone
 
-from foodgram.constants import (MAX_HASH_LENGTH, MAX_INGRIDIENT_NAME_LENGTH,
-                                MAX_LINK_LENGTH, MAX_RECIPE_NAME_LENGTH,
-                                MAX_TAG_LENGTH, MAX_UNIT_NAME_LENGTH,
+from foodgram.constants import (MAX_INGREDIENT_AMOUNT,
+                                MAX_INGRIDIENT_NAME_LENGTH, MAX_LINK_LENGTH,
+                                MAX_RECIPE_LENGTH_NAME, MAX_RECIPE_NAME_LENGTH,
+                                MAX_STR_FIELD, MAX_TAG_LENGTH,
+                                MAX_UNIT_NAME_LENGTH, MIN_INGREDIENT_AMOUNT,
                                 MIN_RECIPE_LENGTH_NAME)
+from recipes.services import generate_short_link
 
 User = get_user_model()
 
@@ -17,22 +17,24 @@ class Ingredient(models.Model):
     name = models.CharField(
         'Название ингредиента',
         max_length=MAX_INGRIDIENT_NAME_LENGTH,
-        unique=True,
-        blank=False,
-        null=False)
+        unique=True)
     measurement_unit = models.CharField(
         'Единица измерения',
-        max_length=MAX_UNIT_NAME_LENGTH,
-        blank=False,
-        null=False)
+        max_length=MAX_UNIT_NAME_LENGTH)
 
     class Meta:
         ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='unique_name_measurement_unit'
+            ),
+        )
 
     def __str__(self):
-        return self.name
+        return self.name[:MAX_STR_FIELD]
 
 
 class Tag(models.Model):
@@ -53,7 +55,7 @@ class Tag(models.Model):
         verbose_name_plural = 'Теги'
 
     def __str__(self):
-        return f'{self.name}'
+        return self.name[:MAX_STR_FIELD]
 
 
 class Recipie(models.Model):
@@ -65,18 +67,15 @@ class Recipie(models.Model):
     image = models.ImageField(
         'Картинка',
         upload_to='recipes/',
-        blank=False,
         help_text='Изображение блюда'
     )
     name = models.CharField(
         'Название',
         max_length=MAX_RECIPE_NAME_LENGTH,
-        blank=False,
         help_text='Наименование рецепта'
     )
     text = models.TextField(
         'Описание',
-        blank=False,
         help_text='Описание рецепта',
     )
     cooking_time = models.PositiveSmallIntegerField(
@@ -85,7 +84,12 @@ class Recipie(models.Model):
             MinValueValidator(
                 MIN_RECIPE_LENGTH_NAME,
                 f'Значение не должно быть меньше {MIN_RECIPE_LENGTH_NAME}',
-            ),),
+            ),
+            MaxValueValidator(
+                MAX_RECIPE_LENGTH_NAME,
+                f'Значение не должно быть меньше {MAX_RECIPE_LENGTH_NAME}',
+            )
+        )
     )
     pub_date = models.DateTimeField(
         'Дата публикации',
@@ -95,7 +99,6 @@ class Recipie(models.Model):
         Ingredient,
         through='RecipeIngredient',
         verbose_name='Ингредиенты',
-        blank=False,
     )
     tags = models.ManyToManyField(
         Tag,
@@ -105,23 +108,7 @@ class Recipie(models.Model):
         'Ссылка на рецепт',
         max_length=MAX_LINK_LENGTH,
         unique=True,
-        blank=False,
     )
-
-    def generate_short_link(self):
-        base_str = f"{timezone.now().timestamp()}{self.id if self.id else ''}"
-        return hashlib.md5(base_str.encode()).hexdigest()[:MAX_HASH_LENGTH]
-
-    def save(self, *args, **kwargs):
-        if not self.short_link:
-            self.short_link = self.generate_short_link()
-            i = 1
-            original_url = self.short_link
-            while Recipie.objects.filter(short_link=self.short_link,
-                                         ).exists():
-                self.short_link = f'{original_url[:(MAX_HASH_LENGTH - 1)]}{i}'
-                i += 1
-        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ('-pub_date',)
@@ -129,8 +116,12 @@ class Recipie(models.Model):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
+    def save(self, *args, **kwargs):
+        self.short_link = generate_short_link(self.short_link, self.id)
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.name
+        return self.name[:MAX_STR_FIELD]
 
 
 class RecipeIngredient(models.Model):
@@ -149,7 +140,13 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(
         'Количество',
         validators=(
-            MinValueValidator(1, 'Количество не может быть меньше 1'),
+            MinValueValidator(
+                MIN_INGREDIENT_AMOUNT,
+                f'Количество не может быть меньше {MIN_INGREDIENT_AMOUNT}'),
+            MaxValueValidator(
+                MAX_INGREDIENT_AMOUNT,
+                f'Значение не должно быть больше {MAX_INGREDIENT_AMOUNT}',
+            )
         )
     )
 
@@ -164,7 +161,10 @@ class RecipeIngredient(models.Model):
         )
 
     def __str__(self):
-        return f'{self.ingredient.name} - {self.amount}'
+        return (
+            f'{self.ingredient.name[:MAX_STR_FIELD]} - '
+            f'{str(self.amount)[:MAX_STR_FIELD]}'
+        )
 
 
 class Favorite(models.Model):
@@ -192,7 +192,10 @@ class Favorite(models.Model):
         )
 
     def __str__(self):
-        return f'{self.user.username} - {self.recipe.name}'
+        return (
+            f'{self.user.username[:MAX_STR_FIELD]} - '
+            f'{self.recipe.name[:MAX_STR_FIELD]}'
+        )
 
 
 class ShoppingCart(models.Model):
@@ -218,4 +221,7 @@ class ShoppingCart(models.Model):
         )
 
     def __str__(self):
-        return f'{self.recipe.name} в корзине у {self.user.username}'
+        return (
+            f'{self.recipe.name[:MAX_STR_FIELD]} '
+            f'в корзине у {self.user.username}'
+        )
