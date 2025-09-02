@@ -31,16 +31,9 @@ class UserViewSet(BaseUserViewSet):
     permission_classes = (IsAuthenticated, OwnerOrReadOnly,)
     pagination_class = PageNumberPagination
 
-    @action(detail=True,
-            methods=('delete',),
-            url_path='avatar')
-    def avatar_delete(self, request):
-        request.user.avatar.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=True,
+    @action(detail=False,
             methods=('put',),
-            url_path='avatar')
+            url_path='me/avatar')
     def avatar_update(self, request):
         serializer = AvatarUpdateSerializer(
             request.user,
@@ -51,6 +44,11 @@ class UserViewSet(BaseUserViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @avatar_update.mapping.delete
+    def avatar_delete(self, request):
+        request.user.avatar.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False,
             methods=('get',),

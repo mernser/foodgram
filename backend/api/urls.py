@@ -4,7 +4,7 @@ from rest_framework import routers
 from api.views import (IngredientViewSet, RecipeViewSet, TagViewSet,
                        UserViewSet, get_recipe_short_link)
 
-router = routers.SimpleRouter()
+router = routers.DefaultRouter()
 router.register('tags', TagViewSet, basename='tags')
 router.register('ingredients', IngredientViewSet, basename='ingredients')
 router.register('recipes', RecipeViewSet, basename='recipes')
@@ -14,9 +14,6 @@ urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
     path('users/subscriptions/',
          UserViewSet.as_view({'get': 'subscriptions'})),
-    path('users/me/avatar/',
-         UserViewSet.as_view({'put': 'avatar_update',
-                                     'delete': 'avatar_delete'})),
     path('users/<int:pk>/subscribe/',
          UserViewSet.as_view({'post': 'subscribe',
                               'delete': 'unsubscribe'})),
