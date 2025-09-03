@@ -14,7 +14,8 @@ class RecipeIngredientInline(admin.TabularInline):
 
 @admin.register(Recipie)
 class RecipieAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author', 'get_ingredients', 'get_tags')
+    list_display = ('name', 'author', 'get_ingredients',
+                    'get_tags', 'get_favorites_count')
     search_fields = ('name', 'username')
     list_filter = ('tags',)
     inlines = (RecipeIngredientInline,)

@@ -27,6 +27,7 @@ class Command(BaseCommand):
                 file_path = os.path.join(settings.BASE_DIR, file_path)
         if not os.path.exists(file_path):
             raise FileNotFoundError('файл не найден')
+        self.stdout.write(self.style.NOTICE('Загрузка ингредиентов начата.'))
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 reader = csv.reader(f)
@@ -45,3 +46,7 @@ class Command(BaseCommand):
             self.stderr.write(
                 self.style.ERROR(f'Ошибка при чтении/записи: {e}')
             )
+            raise
+        self.stdout.write(
+            self.style.SUCCESS('Загрузка ингредиентов завершена.')
+        )

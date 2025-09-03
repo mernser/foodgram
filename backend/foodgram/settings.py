@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from api.permissions import OwnerOrReadOnly
+from rest_framework.permissions import AllowAny
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -143,13 +143,13 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': False,
     'PERMISSIONS': {
-        'user': [OwnerOrReadOnly],
+        'user': [AllowAny],
         'user_list': ['rest_framework.permissions.AllowAny'],
     }
 }
 
 AUTHENTICATION_BACKENDS = [
-    "djoser.auth_backends.LoginFieldBackend",
+    'djoser.auth_backends.LoginFieldBackend',
 ]
 
 MEDIA_URL = '/media/'
