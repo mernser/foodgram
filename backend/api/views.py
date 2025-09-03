@@ -57,7 +57,9 @@ class UserViewSet(BaseUserViewSet):
     def subscriptions(self, request):
         subscriptions = User.objects.filter(
             authors__user=request.user
-        ).annotate(recipes_count=Count('recipes'))
+        ).annotate(
+            recipes_count=Count('recipes')
+        ).order_by('-date_joined')
         page = self.paginate_queryset(subscriptions)
         serializer = UserProfileListRecipesSerilizer(
             page,
@@ -86,26 +88,25 @@ class UserViewSet(BaseUserViewSet):
             user=request.user,
             author=user_to_unsubscribe
         ).delete()
-
-        if deleted_count > 0:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            status=(
+                status.HTTP_204_NO_CONTENT
+                if deleted_count
+                else status.HTTP_400_BAD_REQUEST
+            )
+        )
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
-    http_method_names = ('get',)
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    http_method_names = ('get',)
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = (IngredientSearchFilter,)
     search_fields = ('name',)
 
@@ -157,10 +158,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             user=self.request.user,
             recipe=recipe
         ).delete()
-
-        if deleted_count > 0:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            status=(
+                status.HTTP_204_NO_CONTENT
+                if deleted_count
+                else status.HTTP_400_BAD_REQUEST
+            )
+        )
 
     @action(
         detail=True,
