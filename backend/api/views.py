@@ -9,7 +9,8 @@ from django_filters import rest_framework
 from djoser.views import UserViewSet as BaseUserViewSet
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
 from api.filters import IngredientSearchFilter, RecipeFilter
@@ -29,11 +30,12 @@ User = get_user_model()
 
 
 class UserViewSet(BaseUserViewSet):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     pagination_class = PageNumberPagination
 
     @action(detail=False,
-            url_path='me')
+            url_path='me',
+            permission_classes=(IsAuthenticated,))
     def me(self, request):
         serializer = UserProfileSerializer(
             request.user,
