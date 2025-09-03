@@ -66,7 +66,7 @@ class UserViewSet(BaseUserViewSet):
             url_path='subscriptions')
     def subscriptions(self, request):
         subscriptions = User.objects.filter(
-            authors__user=request.user
+            author_subscribers__user=request.user
         ).annotate(
             recipes_count=Count('recipes')
         ).order_by('-date_joined')

@@ -51,20 +51,20 @@ class Subscription(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Подписки пользователя',
-        related_name='subscribers'
+        related_name='user_subscribers'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name='Подписки на автора',
-        related_name='authors'
+        related_name='author_subscribers'
     )
 
     class Meta:
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'author'),
-                name='unique_subscribers',
+                name='unique_user_subscribers',
             ),
             models.CheckConstraint(
                 check=~models.Q(user=models.F('author')),

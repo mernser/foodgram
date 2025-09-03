@@ -45,7 +45,7 @@ class UserProfileSerializer(UserSerializer):
         return (
             request
             and request.user.is_authenticated
-            and request.user.subscribers.filter(author=obj).exists()
+            and request.user.user_subscribers.filter(author=obj).exists()
         )
 
 
