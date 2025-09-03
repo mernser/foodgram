@@ -1,13 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from foodgram.constants import (ERROR_ALREADY_FAVORITED,
-                                ERROR_ALREADY_IN_SHOPPINGCART,
-                                ERROR_ALREADY_SUBSCRIBED,
+from foodgram.constants import (ERROR_ALREADY_SUBSCRIBED,
                                 ERROR_DUBLICATE_INGREDIENT,
                                 ERROR_DUBLICATE_TAG, ERROR_EMPTY_INGREDIENT,
                                 ERROR_EMPTY_TAG, ERROR_NO_IMAGE,
