@@ -2,12 +2,11 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from foodgram.constants import (MAX_INGREDIENT_AMOUNT,
+from foodgram.constants import (MAX_COOKING_TIME, MAX_INGREDIENT_AMOUNT,
                                 MAX_INGRIDIENT_NAME_LENGTH, MAX_LINK_LENGTH,
-                                MAX_RECIPE_LENGTH_NAME, MAX_RECIPE_NAME_LENGTH,
-                                MAX_STR_FIELD, MAX_TAG_LENGTH,
-                                MAX_UNIT_NAME_LENGTH, MIN_INGREDIENT_AMOUNT,
-                                MIN_RECIPE_LENGTH_NAME)
+                                MAX_RECIPE_NAME_LENGTH, MAX_STR_FIELD,
+                                MAX_TAG_LENGTH, MAX_UNIT_NAME_LENGTH,
+                                MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT)
 from recipes.services import generate_short_link
 
 User = get_user_model()
@@ -82,12 +81,12 @@ class Recipie(models.Model):
         'Время приготовления (в минутах)',
         validators=(
             MinValueValidator(
-                MIN_RECIPE_LENGTH_NAME,
-                f'Значение не должно быть меньше {MIN_RECIPE_LENGTH_NAME}',
+                MIN_COOKING_TIME,
+                f'Значение не должно быть меньше {MIN_COOKING_TIME}',
             ),
             MaxValueValidator(
-                MAX_RECIPE_LENGTH_NAME,
-                f'Значение не должно быть меньше {MAX_RECIPE_LENGTH_NAME}',
+                MAX_COOKING_TIME,
+                f'Значение не должно быть меньше {MAX_COOKING_TIME}',
             )
         )
     )
