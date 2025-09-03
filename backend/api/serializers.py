@@ -240,12 +240,11 @@ class CreateRecipeSerializer(RecipeSerializer):
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients', None)
         tags = validated_data.pop('tags', None)
-        instance = super().update(instance, validated_data)
         instance.save()
         instance.tags.set(tags)
         instance.recipe_ingredients.all().delete()
         self.create_recipe_ingredients(instance, ingredients)
-        return instance
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         return RecipeSerializer(instance, context=self.context).data
@@ -282,12 +281,8 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
         fields = ('author',)
 
     def to_representation(self, instance):
-        subscribed_user = User.objects.filter(
-            id=instance.author.id
-        ).annotate(recipes_count=Count('recipes')).first()
-
         return UserProfileListRecipesSerilizer(
-            subscribed_user,
+            instance.author,
             context=self.context
         ).data
 
@@ -305,7 +300,6 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
 
 
 class BaseCreateRelationSerializer(serializers.ModelSerializer):
-    error_message = None
 
     class Meta:
         fields = ('user', 'recipe')
@@ -315,7 +309,9 @@ class BaseCreateRelationSerializer(serializers.ModelSerializer):
             user=data.get('user'),
             recipe=data.get('recipe')
         ).exists():
-            raise serializers.ValidationError(self.error_message)
+            raise serializers.ValidationError(
+                f'Запись уже существует в {self.Meta.model._meta.verbose_name}'
+            )
         return data
 
     def to_representation(self, instance):
@@ -325,7 +321,6 @@ class BaseCreateRelationSerializer(serializers.ModelSerializer):
 
 
 class FavoriteCreateSerializer(BaseCreateRelationSerializer):
-    error_message = ERROR_ALREADY_FAVORITED
     representation_serializer = FavoriteRecipeSerializer
 
     class Meta(BaseCreateRelationSerializer.Meta):
@@ -333,7 +328,6 @@ class FavoriteCreateSerializer(BaseCreateRelationSerializer):
 
 
 class ShoppingCartCreateSerializer(BaseCreateRelationSerializer):
-    error_message = ERROR_ALREADY_IN_SHOPPINGCART
     representation_serializer = FavoriteRecipeSerializer
 
     class Meta(BaseCreateRelationSerializer.Meta):
