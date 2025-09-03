@@ -141,3 +141,9 @@ dmypy.json
 static/
 media/
 .zip
+
+# local redoc
+infra/.docker-compose_redoc.yml
+infra/.nginx_rename.conf
+infra/.nginx_redoc.conf
+.nginx_redoc.conf

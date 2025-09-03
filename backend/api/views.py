@@ -19,7 +19,8 @@ from api.serializers import (AvatarUpdateSerializer, CreateRecipeSerializer,
                              FavoriteCreateSerializer, IngredientSerializer,
                              RecipeSerializer, ShoppingCartCreateSerializer,
                              SubscriptionCreateSerializer, TagSerializer,
-                             UserProfileListRecipesSerilizer)
+                             UserProfileListRecipesSerilizer,
+                             UserProfileSerializer)
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipie,
                             ShoppingCart, Tag)
 from users.models import Subscription
@@ -28,8 +29,17 @@ User = get_user_model()
 
 
 class UserViewSet(BaseUserViewSet):
-    permission_classes = (IsAuthenticated, OwnerOrReadOnly,)
+    permission_classes = (IsAuthenticated,)
     pagination_class = PageNumberPagination
+
+    @action(detail=False,
+            url_path='me')
+    def me(self, request):
+        serializer = UserProfileSerializer(
+            request.user,
+            context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False,
             methods=('put',),
@@ -71,8 +81,8 @@ class UserViewSet(BaseUserViewSet):
     @action(detail=True,
             methods=('post',),
             permission_classes=(IsAuthenticated,))
-    def subscribe(self, request, pk=None):
-        user_to_subscribe = get_object_or_404(User, pk=pk)
+    def subscribe(self, request, id=None):
+        user_to_subscribe = get_object_or_404(User, pk=id)
         serializer = SubscriptionCreateSerializer(
             data={'author': user_to_subscribe.id},
             context={'request': request}
@@ -82,8 +92,8 @@ class UserViewSet(BaseUserViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
-    def unsubscribe(self, request, pk=None):
-        user_to_unsubscribe = get_object_or_404(User, pk=pk)
+    def unsubscribe(self, request, id=None):
+        user_to_unsubscribe = get_object_or_404(User, pk=id)
         deleted_count, _ = Subscription.objects.filter(
             user=request.user,
             author=user_to_unsubscribe
