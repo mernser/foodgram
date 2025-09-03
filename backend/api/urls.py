@@ -1,8 +1,7 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from api.views import (IngredientViewSet, RecipeViewSet, TagViewSet,
-                       UserViewSet, get_recipe_short_link)
+from api.views import IngredientViewSet, RecipeViewSet, TagViewSet, UserViewSet
 
 router = routers.DefaultRouter()
 router.register('tags', TagViewSet, basename='tags')
@@ -17,8 +16,8 @@ urlpatterns = [
     path('users/<int:pk>/subscribe/',
          UserViewSet.as_view({'post': 'subscribe',
                               'delete': 'unsubscribe'})),
-    path('recipes/<int:pk>/get-link/',
-         get_recipe_short_link),
+#     path('recipes/<int:pk>/get-link/',
+#          get_recipe_short_link),
     path('', include('djoser.urls')),
     path('', include(router.urls)),
 ]

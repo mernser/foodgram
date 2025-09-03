@@ -219,11 +219,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         return response
 
-
-@api_view(('GET',))
-def get_recipe_short_link(request, pk):
-    recipe = get_object_or_404(Recipie, id=pk)
-    short_link_path = reverse('short_link_redirect',
-                              kwargs={'short_link': recipe.short_link})
-    short_link_url = request.build_absolute_uri(short_link_path)
-    return Response({'short-link': short_link_url})
+    @action(
+        methods=('get',),
+        detail=True,
+        url_path='get-link',
+    )
+    def get_recipe_short_link(self, request, pk):
+        recipe = get_object_or_404(Recipie, id=pk)
+        short_link_path = reverse('short_link_redirect',
+                                  kwargs={'short_link': recipe.short_link})
+        short_link_url = request.build_absolute_uri(short_link_path)
+        return Response({'short-link': short_link_url})
