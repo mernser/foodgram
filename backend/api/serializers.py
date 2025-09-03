@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Count
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
@@ -53,7 +54,10 @@ class UserProfileSerializer(UserSerializer):
 
 class UserProfileListRecipesSerilizer(UserProfileSerializer):
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.IntegerField(read_only=True)
+    recipes_count = serializers.IntegerField(
+        read_only=True,
+        default=0
+    )
 
     class Meta(UserProfileSerializer.Meta):
         fields = UserProfileSerializer.Meta.fields + (
@@ -61,11 +65,14 @@ class UserProfileListRecipesSerilizer(UserProfileSerializer):
         )
 
     def get_recipes(self, obj):
-        recipes_limit = (
-            self.context
-            .get('request')
-            .query_params.get('recipes_limit')
-        )
+        request = self.context.get('request')
+        recipes_limit = None
+        if request is not None:
+            recipes_limit = (
+                self.context
+                .get('request')
+                .query_params.get('recipes_limit')
+            )
         recipes = obj.recipes.all()
         if recipes_limit:
             try:
@@ -124,7 +131,11 @@ class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
     amount = serializers.IntegerField(
         min_value=MIN_INGREDIENT_AMOUNT,
-        max_value=MAX_INGREDIENT_AMOUNT
+        max_value=MAX_INGREDIENT_AMOUNT,
+        error_messages={
+            'min_value': f'Минимальное количество — {MIN_INGREDIENT_AMOUNT}.',
+            'max_value': f'Максимальное количество — {MAX_INGREDIENT_AMOUNT}.',
+        }
     )
 
     class Meta:
@@ -208,16 +219,15 @@ class CreateRecipeSerializer(RecipeSerializer):
 
     @staticmethod
     def create_recipe_ingredients(recipe, ingredients):
-        recipe_ingredients = [
+        RecipeIngredient.objects.bulk_create(
             RecipeIngredient(
                 recipe=recipe,
                 ingredient=ingredient['id'],
                 amount=ingredient['amount']
-            )
-            for ingredient in ingredients
-        ]
-        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+            ) for ingredient in ingredients
+        )
 
+    @transaction.atomic
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
         ingredients = validated_data.pop('ingredients')
