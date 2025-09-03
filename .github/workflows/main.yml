@@ -104,7 +104,7 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "infra/docker-compose.yml"
+        source: "docker-compose.yml"
         target: "foodgram"
     - name: Executing remote ssh commands to deploy
       env:
@@ -126,3 +126,4 @@ jobs:
           sudo docker compose exec backend python manage.py collectstatic
           sudo docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
           sudo docker compose exec backend python manage.py fill_db ./data/ingredients.csv
+          sudo docker compose cp gateway:./docs/. ./docs/
