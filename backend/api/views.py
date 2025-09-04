@@ -68,10 +68,10 @@ class UserViewSet(BaseUserViewSet):
             url_path='subscriptions')
     def subscriptions(self, request):
         subscriptions = User.objects.filter(
-            author_subscribers__user=request.user
+            subscriptions_to_author__user=request.user
         ).annotate(
             recipes_count=Count('recipes')
-        ).order_by('-date_joined')
+        ).order_by('last_name')
         page = self.paginate_queryset(subscriptions)
         serializer = UserProfileListRecipesSerilizer(
             page,

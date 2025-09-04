@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
 
-from rest_framework.permissions import AllowAny
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', '')
@@ -142,7 +140,7 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': False,
     'PERMISSIONS': {
-        'user': [AllowAny],
+        'user': ['rest_framework.permissions.AllowAny'],
         'user_list': ['rest_framework.permissions.AllowAny'],
     }
 }

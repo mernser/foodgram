@@ -45,7 +45,7 @@ class UserProfileSerializer(UserSerializer):
         return (
             request
             and request.user.is_authenticated
-            and request.user.user_subscribers.filter(author=obj).exists()
+            and request.user.user_subscriptions.filter(author=obj).exists()
         )
 
 
@@ -64,7 +64,7 @@ class UserProfileListRecipesSerilizer(UserProfileSerializer):
     def get_recipes(self, obj):
         request = self.context.get('request')
         recipes_limit = None
-        if request is not None:
+        if request:
             recipes_limit = (
                 self.context
                 .get('request')
@@ -234,6 +234,7 @@ class CreateRecipeSerializer(RecipeSerializer):
         self.create_recipe_ingredients(recipe, ingredients)
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients', None)
         tags = validated_data.pop('tags', None)
@@ -302,12 +303,13 @@ class BaseCreateRelationSerializer(serializers.ModelSerializer):
         fields = ('user', 'recipe')
 
     def validate(self, data):
-        if self.Meta.model.objects.filter(
+        model = self.Meta.model
+        if model.objects.filter(
             user=data.get('user'),
             recipe=data.get('recipe')
         ).exists():
             raise serializers.ValidationError(
-                f'Запись уже существует в {self.Meta.model._meta.verbose_name}'
+                f'Запись уже существует в {model._meta.verbose_name}'
             )
         return data
 
@@ -318,14 +320,12 @@ class BaseCreateRelationSerializer(serializers.ModelSerializer):
 
 
 class FavoriteCreateSerializer(BaseCreateRelationSerializer):
-    representation_serializer = FavoriteRecipeSerializer
 
     class Meta(BaseCreateRelationSerializer.Meta):
         model = Favorite
 
 
 class ShoppingCartCreateSerializer(BaseCreateRelationSerializer):
-    representation_serializer = FavoriteRecipeSerializer
 
     class Meta(BaseCreateRelationSerializer.Meta):
         model = ShoppingCart
